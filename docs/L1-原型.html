@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>L1 原型 · 绘本乐高</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:"Microsoft YaHei","Segoe UI",sans-serif; background:#1a1a2e; color:#fff; height:100vh; overflow:hidden; user-select:none; }
+  .screen { display:none; height:100vh; flex-direction:column; }
+  .screen.active { display:flex; }
+
+  /* Top bar */
+  .topbar { display:flex; align-items:center; padding:14px 20px; background:rgba(0,0,0,0.2); flex-shrink:0; }
+  .topbar .title { font-size:16px; font-weight:600; flex:1; }
+  .progress-dots { display:flex; gap:6px; }
+  .pdot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.2); }
+  .pdot.done { background:#4ade80; }
+  .pdot.cur { background:#f59e0b; width:24px; border-radius:5px; }
+
+  .body { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; overflow-y:auto; }
+
+  /* Buttons */
+  .big-btn { padding:16px 40px; border-radius:50px; border:none; background:#f59e0b; color:#fff; font-size:20px; font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(245,158,11,0.4); transition:transform 0.15s; }
+  .big-btn:active { transform:scale(0.95); }
+  .big-btn.green { background:#22c55e; box-shadow:0 6px 20px rgba(34,197,94,0.4); }
+
+  /* Cards */
+  .card-grid { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; max-width:600px; }
+  .card { width:150px; height:180px; border-radius:20px; background:rgba(255,255,255,0.08); border:3px solid transparent; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; }
+  .card:hover, .card:active { border-color:#f59e0b; background:rgba(245,158,11,0.15); transform:scale(1.05); }
+  .card .emoji { font-size:56px; }
+  .card .label { font-size:15px; font-weight:600; }
+
+  /* Character cards */
+  .char-card { width:120px; height:160px; border-radius:20px; background:rgba(255,255,255,0.08); border:3px solid transparent; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
+  .char-card:hover { border-color:#f59e0b; transform:scale(1.05); }
+  .char-card .emoji { font-size:64px; }
+  .char-card .name { font-size:14px; }
+
+  /* Name chips */
+  .name-chips { display:flex; gap:12px; margin-top:16px; }
+  .chip { padding:10px 24px; border-radius:20px; background:rgba(255,255,255,0.1); border:2px solid transparent; cursor:pointer; font-size:16px; transition:all 0.2s; }
+  .chip:active, .chip.sel { border-color:#f59e0b; background:rgba(245,158,11,0.2); }
+
+  /* Color palette */
+  .palette { display:flex; gap:10px; justify-content:center; padding:14px; flex-wrap:wrap; }
+  .color { width:44px; height:44px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all 0.15s; }
+  .color.sel { border-color:#fff; transform:scale(1.2); box-shadow:0 0 12px rgba(255,255,255,0.5); }
+
+  /* Canvas area */
+  .canvas-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:10px; }
+  #colorCanvas { background:#fff; border-radius:16px; touch-action:none; max-width:100%; max-height:100%; }
+
+  /* Story page */
+  .story-page { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+  .story-img { width:240px; height:320px; border-radius:16px; background:#2a2a4e; display:flex; align-items:center; justify-content:center; font-size:80px; }
+  .story-text { text-align:center; max-width:360px; }
+  .story-text .zh { font-size:20px; font-weight:600; margin-bottom:6px; }
+  .story-text .en { font-size:13px; opacity:0.6; }
+  .audio-row { display:flex; gap:10px; }
+  .audio-btn { padding:10px 20px; border-radius:24px; border:none; background:rgba(255,255,255,0.12); color:#fff; font-size:14px; cursor:pointer; }
+
+  /* Done page */
+  .done-celebrate { font-size:64px; animation:bounce 1s infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-15px)} }
+  .done-title { font-size:24px; font-weight:700; text-align:center; }
+  .done-book-cover { width:160px; height:220px; border-radius:12px; background:linear-gradient(135deg,#f59e0b,#ef4444); display:flex; align-items:center; justify-content:center; font-size:60px; box-shadow:0 10px 30px rgba(0,0,0,0.5); margin:16px 0; }
+  .done-btns { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+
+  .hint { font-size:13px; opacity:0.4; margin-top:10px; text-align:center; }
+  .protobadge { position:fixed; top:8px; right:8px; background:rgba(239,68,68,0.9); color:#fff; font-size:10px; padding:3px 8px; border-radius:10px; z-index:999; }
+</style>
+</head>
+<body>
+<div class="protobadge">PROTOTYPE</div>
+
+<!-- ========== Screen 1: Choose Theme ========== -->
+<div class="screen active" id="s1">
+  <div class="topbar"><div class="title">📚 绘本乐高</div></div>
+  <div class="body">
+    <h2 style="font-size:24px;margin-bottom:8px;">今天搭什么故事？</h2>
+    <p class="hint" style="margin-bottom:24px;">点一个你喜欢的！</p>
+    <div class="card-grid">
+      <div class="card" onclick="chooseTheme('dino','🦕','小恐龙去冒险')">
+        <div class="emoji">🦕</div><div class="label">小恐龙去冒险</div>
+      </div>
+      <div class="card" onclick="chooseTheme('car','🚗','小汽车旅行记')">
+        <div class="emoji">🚗</div><div class="label">小汽车旅行记</div>
+      </div>
+      <div class="card" onclick="chooseTheme('castle','🏰','公主与城堡')">
+        <div class="emoji">🏰</div><div class="label">公主与城堡</div>
+      </div>
+      <div class="card" onclick="chooseTheme('ocean','🐠','海底好朋友')">
+        <div class="emoji">🐠</div><div class="label">海底好朋友</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Screen 2: Choose Character ========== -->
+<div class="screen" id="s2">
+  <div class="topbar"><div class="title" id="s2title">🦕 小恐龙去冒险</div></div>
+  <div class="body">
+    <h2 style="font-size:22px;margin-bottom:6px;">选一个好朋友！</h2>
+    <div class="card-grid" style="margin-top:20px;">
+      <div class="char-card" onclick="chooseChar('green','🦖','绿色恐龙')">
+        <div class="emoji">🦖</div><div class="name">绿色恐龙</div>
+      </div>
+      <div class="char-card" onclick="chooseChar('pink','🦕','粉色恐龙')">
+        <div class="emoji">🦕</div><div class="name">粉色恐龙</div>
+      </div>
+      <div class="char-card" onclick="chooseChar('blue','🦎','蓝色恐龙')">
+        <div class="emoji">🦎</div><div class="name">蓝色恐龙</div>
+      </div>
+    </div>
+    <div id="nameSection" style="display:none;margin-top:24px;text-align:center;">
+      <p style="font-size:16px;margin-bottom:8px;">叫什么名字？</p>
+      <div class="name-chips">
+        <div class="chip" onclick="chooseName(this,'豆豆')">豆豆</div>
+        <div class="chip" onclick="chooseName(this,'奇奇')">奇奇</div>
+        <div class="chip" onclick="chooseName(this,'乐乐')">乐乐</div>
+      </div>
+    </div>
+    <button class="big-btn" id="startBtn" style="margin-top:30px;display:none;" onclick="startBuilding()">开始搭故事！</button>
+  </div>
+</div>
+
+<!-- ========== Screen 3: Choose Scene (per page) ========== -->
+<div class="screen" id="s3">
+  <div class="topbar">
+    <div class="title" id="s3title">第 1 页</div>
+    <div class="progress-dots" id="s3dots"></div>
+  </div>
+  <div class="body">
+    <h2 style="font-size:22px;margin-bottom:6px;" id="s3prompt">豆豆去哪里？</h2>
+    <p class="hint" style="margin-bottom:20px;">选一个地方！</p>
+    <div class="card-grid" id="sceneGrid"></div>
+  </div>
+</div>
+
+<!-- ========== Screen 4: Coloring ========== -->
+<div class="screen" id="s4">
+  <div class="topbar">
+    <div class="title">🎨 涂色时间</div>
+    <button onclick="undoColor()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;">↩️ 撤销</button>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="colorCanvas" width="320" height="400"></canvas>
+  </div>
+  <div class="palette" id="palette"></div>
+  <div style="padding:10px 20px 20px;text-align:center;">
+    <button class="big-btn green" onclick="finishColoring()">✅ 完成涂色</button>
+  </div>
+</div>
+
+<!-- ========== Screen 5: Story Page (listen) ========== -->
+<div class="screen" id="s5">
+  <div class="topbar">
+    <div class="title" id="s5title">第 1 页</div>
+    <div class="progress-dots" id="s5dots"></div>
+  </div>
+  <div class="story-page">
+    <div class="story-img" id="s5img">🦕🌲</div>
+    <div class="story-text">
+      <div class="zh" id="s5zh">豆豆走进了绿色的森林</div>
+      <div class="en" id="s5en">Doudou walked into the green forest</div>
+    </div>
+    <div class="audio-row">
+      <button class="audio-btn" onclick="speak('zh')">🔊 中文</button>
+      <button class="audio-btn" onclick="speak('en')">🔊 English</button>
+    </div>
+    <button class="big-btn" id="nextPageBtn" onclick="nextPage()">下一页 →</button>
+  </div>
+</div>
+
+<!-- ========== Screen 6: Done ========== -->
+<div class="screen" id="s6">
+  <div class="body">
+    <div class="done-celebrate">🎉</div>
+    <div class="done-title" id="doneTitle">豆豆的《小恐龙去冒险》<br>完成啦！</div>
+    <div class="done-book-cover" id="doneCover">🦕</div>
+    <div class="done-btns">
+      <button class="big-btn" onclick="alert('原型演示：这里会自动播放整本绘本（翻页+配音）')">▶️ 看我的书</button>
+      <button class="big-btn green" onclick="alert('原型演示：这里会生成二维码，扫码就能看')">📱 给爸爸妈妈看</button>
+      <button class="big-btn" style="background:rgba(255,255,255,0.12);box-shadow:none;" onclick="location.reload()">🆕 再做一本</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== State =====
+let theme='', themeEmoji='', themeName='';
+let charColor='', charEmoji='', charName='';
+let curPage=0;
+const TOTAL_PAGES=4; // MVP: 4 pages
+let selectedScenes=[];
+let curColor='#ef4444';
+
+// Scene data (mock — real version from backend/AI)
+const SCENES = {
+  dino: [
+    {id:'forest', emoji:'🌲', name:'森林', zh:'豆豆走进了森林', en:'Doudou walked into the forest'},
+    {id:'river', emoji:'🏞️', name:'河边', zh:'豆豆来到小河边', en:'Doudou came to the river'},
+    {id:'cave', emoji:'🏔️', name:'山洞', zh:'豆豆发现了一个山洞', en:'Doudou found a cave'},
+    {id:'sky', emoji:'🌈', name:'彩虹', zh:'天边出现了彩虹', en:'A rainbow appeared in the sky'}
+  ]
+};
+
+// ===== Navigation =====
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== S1: Theme =====
+function chooseTheme(t,e,n){ theme=t; themeEmoji=e; themeName=n; document.getElementById('s2title').textContent=e+' '+n; show('s2'); }
+
+// ===== S2: Character =====
+function chooseChar(c,e,n){
+  charColor=c; charEmoji=e;
+  document.querySelectorAll('.char-card').forEach(el=>el.style.borderColor='');
+  event.currentTarget.style.borderColor='#f59e0b';
+  document.getElementById('nameSection').style.display='block';
+}
+function chooseName(el,n){
+  charName=n;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('startBtn').style.display='inline-flex';
+}
+
+function startBuilding(){
+  curPage=0; selectedScenes=[];
+  show('s3'); renderScenePage();
+}
+
+// ===== S3: Scene selection =====
+function renderScenePage(){
+  curPage++;
+  document.getElementById('s3title').textContent='第 '+curPage+' 页';
+  document.getElementById('s3prompt').textContent=charName+'去哪里？';
+  // progress dots
+  let dots='';
+  for(let i=0;i<TOTAL_PAGES;i++) dots+='<div class="pdot '+(i<curPage-1?'done':'')+(i===curPage-1?' cur':'')+'"></div>';
+  document.getElementById('s3dots').innerHTML=dots;
+  // scene cards (reuse scenes, in real version AI picks based on page)
+  const scenes = SCENES[theme] || SCENES.dino;
+  document.getElementById('sceneGrid').innerHTML = scenes.map(s=>
+    `<div class="card" onclick="chooseScene('${s.id}','${s.emoji}','${s.name}','${s.zh}','${s.en}')">
+      <div class="emoji">${s.emoji}</div><div class="label">${s.name}</div>
+    </div>`).join('');
+}
+
+function chooseScene(id,emoji,name,zh,en){
+  selectedScenes.push({id,emoji,name,zh,en});
+  show('s4'); initCanvas();
+}
+
+// ===== S4: Coloring (Canvas flood fill) =====
+const COLORS=['#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#a855f7','#ec4899','#92400e'];
+let canvas,ctx,imgData,undoStack=[];
+
+function initCanvas(){
+  canvas=document.getElementById('colorCanvas');
+  ctx=canvas.getContext('2d');
+  // Draw a simple lineart scene (mock — real version loads AI-generated lineart)
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='#333'; ctx.lineWidth=3; ctx.lineJoin='round';
+  // Draw a simple scene: ground + tree + sun + character placeholder
+  // Ground
+  ctx.beginPath(); ctx.moveTo(0,340); ctx.lineTo(320,340); ctx.stroke();
+  // Tree trunk
+  ctx.strokeRect(40,250,30,90);
+  // Tree leaves
+  ctx.beginPath(); ctx.arc(55,230,45,0,Math.PI*2); ctx.stroke();
+  // Sun
+  ctx.beginPath(); ctx.arc(270,70,35,0,Math.PI*2); ctx.stroke();
+  // Cloud
+  ctx.beginPath(); ctx.arc(130,80,25,0,Math.PI*2); ctx.arc(160,80,30,0,Math.PI*2); ctx.arc(190,80,25,0,Math.PI*2); ctx.stroke();
+  // Dino placeholder (simple shape)
+  ctx.beginPath();
+  ctx.ellipse(200,290,50,40,0,0,Math.PI*2); ctx.stroke(); // body
+  ctx.beginPath(); ctx.arc(170,260,25,0,Math.PI*2); ctx.stroke(); // head
+  ctx.strokeRect(180,320,15,20); ctx.strokeRect(210,320,15,20); // legs
+  // Eye
+  ctx.beginPath(); ctx.arc(165,255,4,0,Math.PI*2); ctx.stroke();
+
+  undoStack=[];
+  // Build palette
+  document.getElementById('palette').innerHTML=COLORS.map((c,i)=>
+    `<div class="color ${i===0?'sel':''}" style="background:${c}" data-c="${c}" onclick="pickColor('${c}',this)"></div>`).join('');
+  curColor=COLORS[0];
+  imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+}
+
+function pickColor(c,el){
+  curColor=c;
+  document.querySelectorAll('.color').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+canvas?.addEventListener('pointerdown',fill); // bound after init in real flow
+
+// Attach handler properly (delegated — canvas exists in DOM from start)
+document.getElementById('colorCanvas').addEventListener('pointerdown',function(e){
+  if(!ctx) return;
+  const rect=this.getBoundingClientRect();
+  const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+  const x=Math.round((e.clientX-rect.left)*sx);
+  const y=Math.round((e.clientY-rect.top)*sy);
+  undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+  floodFill(x,y,curColor);
+});
+
+function floodFill(x,y,fillColor){
+  const w=canvas.width,h=canvas.height;
+  const data=ctx.getImageData(0,0,w,h).data;
+  const idx=(x,y)=>(y*w+x)*4;
+  const startIdx=idx(x,y);
+  const targetR=data[startIdx],targetG=data[startIdx+1],targetB=data[startIdx+2];
+  // Parse fill color
+  const fr=parseInt(fillColor.slice(1,3),16),fg=parseInt(fillColor.slice(3,5),16),fb=parseInt(fillColor.slice(5,7),16);
+  if(targetR===fr&&targetG===fg&&targetB===fb) return; // same color
+  const tol=40; // tolerance for anti-aliasing
+  const stack=[[x,y]];
+  const visited=new Uint8Array(w*h);
+  while(stack.length){
+    const [cx,cy]=stack.pop();
+    if(cx<0||cx>=w||cy<0||cy>=h) continue;
+    const vi=cy*w+cx;
+    if(visited[vi]) continue;
+    visited[vi]=1;
+    const ci=idx(cx,cy);
+    const dr=data[ci]-targetR,dg=data[ci+1]-targetG,db=data[ci+2]-targetB;
+    // Don't fill black lines (the lineart)
+    if(data[ci]<50&&data[ci+1]<50&&data[ci+2]<50) continue;
+    if(Math.abs(dr)>tol||Math.abs(dg)>tol||Math.abs(db)>tol) continue;
+    data[ci]=fr;data[ci+1]=fg;data[ci+2]=fb;data[ci+3]=255;
+    stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+  ctx.putImageData(new ImageData(data,w,h),0,0);
+}
+
+function undoColor(){
+  if(undoStack.length){
+    ctx.putImageData(undoStack.pop(),0,0);
+  }
+}
+
+function finishColoring(){
+  // Save colored image (mock)
+  show('s5'); renderStoryPage();
+}
+
+// ===== S5: Story page (listen) =====
+function renderStoryPage(){
+  const s=selectedScenes[selectedScenes.length-1];
+  document.getElementById('s5title').textContent='第 '+curPage+' 页';
+  document.getElementById('s5img').textContent=charEmoji+s.emoji;
+  document.getElementById('s5zh').textContent=charName+s.zh.replace(/豆豆/g,'');
+  document.getElementById('s5en').textContent=s.en;
+  // dots
+  let dots='';
+  for(let i=0;i<TOTAL_PAGES;i++) dots+='<div class="pdot '+(i<curPage?'done':'')+(i===curPage?' cur':'')+'"></div>';
+  document.getElementById('s5dots').innerHTML=dots;
+  // last page?
+  document.getElementById('nextPageBtn').textContent = curPage>=TOTAL_PAGES ? '✅ 完成！' : '下一页 →';
+}
+
+function nextPage(){
+  if(curPage>=TOTAL_PAGES){ show('s6'); document.getElementById('doneTitle').innerHTML=charName+'的《'+themeName+'》<br>完成啦！'; document.getElementById('doneCover').textContent=themeEmoji; }
+  else { show('s3'); renderScenePage(); }
+}
+
+// ===== TTS (mock — real version uses edge-tts audio) =====
+function speak(lang){
+  const text = lang==='zh' ? document.getElementById('s5zh').textContent : document.getElementById('s5en').textContent;
+  if('speechSynthesis' in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=lang==='zh'?'zh-CN':'en-US'; u.rate=0.8;
+    speechSynthesis.speak(u);
+  }
+}
+</script>
+</body>
+</html>
