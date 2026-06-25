@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>绘本乐高 StoryBricks — 商业企划书</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "Segoe UI", -apple-system, sans-serif; background: #f7f7f8; color: #2d2d2d; line-height: 1.8; }
+  .cover { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 80px 40px; text-align: center; }
+  .cover h1 { font-size: 42px; margin-bottom: 12px; letter-spacing: 2px; }
+  .cover .subtitle { font-size: 18px; opacity: 0.8; margin-bottom: 30px; }
+  .cover .tagline { font-size: 15px; opacity: 0.6; font-style: italic; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+  .cover .meta { margin-top: 40px; font-size: 13px; opacity: 0.5; }
+  .container { max-width: 820px; margin: 0 auto; padding: 50px 30px 80px; }
+  h2 { font-size: 26px; color: #1a1a2e; margin: 50px 0 20px; padding-bottom: 10px; border-bottom: 3px solid #f59e0b; display: flex; align-items: center; gap: 10px; }
+  h2 .num { background: #f59e0b; color: white; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  h3 { font-size: 19px; color: #16213e; margin: 30px 0 12px; }
+  h4 { font-size: 16px; color: #333; margin: 20px 0 8px; }
+  p { margin-bottom: 14px; }
+  strong { color: #1a1a2e; }
+  em { color: #666; }
+  blockquote { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; color: #92400e; }
+  blockquote strong { color: #92400e; }
+  ul, ol { margin: 12px 0 14px 24px; }
+  li { margin-bottom: 6px; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #d6336c; }
+  pre { background: #1e1e2e; color: #cdd6f4; padding: 18px; border-radius: 10px; overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.6; }
+  pre code { background: none; color: inherit; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  th { background: #1a1a2e; color: white; padding: 12px 14px; text-align: left; font-size: 14px; }
+  td { padding: 11px 14px; border-bottom: 1px solid #eee; font-size: 14px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .card { background: white; border-radius: 12px; padding: 22px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid #0f3460; }
+  .card.green { border-left-color: #22c55e; }
+  .card.orange { border-left-color: #f59e0b; }
+  .card.red { border-left-color: #ef4444; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+  .badge-p0 { background: #fef2f2; color: #dc2626; }
+  .badge-p1 { background: #fef3c7; color: #d97706; }
+  .badge-l { background: #dbeafe; color: #1e40af; }
+  .divider { height: 1px; background: #e5e5e5; margin: 40px 0; }
+  .footer { text-align: center; padding: 30px; color: #999; font-size: 13px; }
+  .toc { background: white; border-radius: 12px; padding: 24px 30px; margin: 30px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .toc h3 { margin-top: 0; color: #1a1a2e; }
+  .toc ol { margin-left: 20px; }
+  .toc a { color: #0f3460; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .formula { background: #1a1a2e; color: #fbbf24; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 14px; line-height: 2; margin: 16px 0; white-space: pre-wrap; }
+  @media (max-width: 600px) { .cover h1 { font-size: 30px; } .container { padding: 30px 16px; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>🏗️ 绘本乐高</h1>
+  <div class="subtitle">StoryBricks — 商业企划书</div>
+  <div class="tagline">用 AI 让每个孩子都能像搭乐高一样"搭"出自己的有声互动绘本</div>
+  <div class="meta">2025-06-25 · 基于战略讨论整理</div>
+</div>
+
+<div class="container">
+
+<div class="toc">
+  <h3>📑 目录</h3>
+  <ol>
+    <li><a href="#s1">产品定位</a></li>
+    <li><a href="#s2">市场分析</a></li>
+    <li><a href="#s3">产品体系</a></li>
+    <li><a href="#s4">留存引擎</a></li>
+    <li><a href="#s5">商业模式</a></li>
+    <li><a href="#s6">技术现状与差距</a></li>
+    <li><a href="#s7">切入策略与验证路径</a></li>
+    <li><a href="#s8">风险与对策</a></li>
+    <li><a href="#s9">北极星愿景</a></li>
+    <li><a href="#s10">关键决策共识</a></li>
+  </ol>
+</div>
+
+<h2 id="s1"><span class="num">1</span> 产品定位</h2>
+
+<h3>一句话定位</h3>
+<blockquote><strong>绘本版乐高</strong> —— 孩子不"创作"绘本，而是用预制零件"搭"绘本。AI 提供角色/场景/情节选项，孩子负责选择、组合、个性化，最终生成一本属于自己的有声双语互动绘本。</blockquote>
+
+<h3>核心理念</h3>
+<p>传统绘本工具要求孩子从白纸"创作"，门槛高、低频、易挫败。本产品借鉴乐高模式：<strong>零件是现成的，孩子做的是选择、组合、拼装</strong>。门槛极低但成就感极高，且同一套零件能搭出无限组合，天然高频。</p>
+
+<h3>与市面产品的根本差异</h3>
+<table>
+  <tr><th>维度</th><th>AI 定制绘本（红海）</th><th>本产品</th></tr>
+  <tr><td>谁创作</td><td>AI 全自动生成</td><td>孩子选择+组合，AI 辅助</td></tr>
+  <tr><td>同质化</td><td>严重（AI 生成一切）</td><td>无（组合千变万化，且有孩子手作痕迹）</td></tr>
+  <tr><td>孩子角色</td><td>消费者</td><td>创作者</td></tr>
+  <tr><td>产出</td><td>一本静态绘本</td><td>有声双语互动绘本 + 作品集</td></tr>
+  <tr><td>复购</td><td>极低（一次性新鲜感）</td><td>高（零件复用+连载+成长轨迹）</td></tr>
+</table>
+
+<h2 id="s2"><span class="num">2</span> 市场分析</h2>
+
+<h3>现有市场格局</h3>
+
+<div class="card red">
+<h4>第一类：C 端 AI 定制绘本（红海）</h4>
+<ul>
+  <li>模式：父母输入孩子名字/喜好 → AI 生图生文 → 在线看或印实体书</li>
+  <li>玩家：Storyland（海外）、StoryBird AI、国内大量小程序（9.9-99元）</li>
+  <li>现状：技术门槛极低、内容同质、复购极低、靠投流打价格战</li>
+</ul>
+<p><strong>教训：AI 全自动生成已被证伪，故事和画风同质化导致用户新鲜感一过即走</strong></p>
+</div>
+
+<div class="card orange">
+<h4>第二类：创作工具类（空白）</h4>
+<ul>
+  <li>现状：要么太通用（Canva），要么太底层（MJ+GPT 手动拼）</li>
+  <li>专门给"绘本创作者"用的 AI 工具基本没有做成产品</li>
+</ul>
+<p><strong>这是机会，但需验证创作者（老师/插画师）是否真有需求</strong></p>
+</div>
+
+<div class="card green">
+<h4>第三类：AI 素养教育（新兴蓝海）</h4>
+<ul>
+  <li>海外有 ReadyAI 等做 K-12 AI 素养，但载体是课件/游戏</li>
+  <li>"让孩子用 AI 做绘本来学 AI"——暂未见明确产品</li>
+</ul>
+<p><strong>潜在差异化方向，但置信度待验证</strong></p>
+</div>
+
+<h3>目标用户</h3>
+<p><strong>核心用户：3-11 岁儿童</strong></p>
+<ul>
+  <li>3-5 岁：涂色/模仿/口述，需要重度脚手架</li>
+  <li>5-7 岁：能编简单故事、操作 pad，半自主</li>
+  <li>7-11 岁：能独立编故事、设计关卡，自主创作</li>
+</ul>
+<p><strong>付费方：父母</strong></p>
+<ul>
+  <li>痛点：想看到孩子的创造力/英语/AI 素养成长，但现有兴趣班贵且产出单一</li>
+  <li>付费锚点：比兴趣班便宜一个数量级（月费 29-49 vs 200-800/月）</li>
+</ul>
+<p><strong>内容供给方：插画师/幼教老师/画室</strong></p>
+<ul>
+  <li>角色：提供预制角色/场景素材（"零件"）</li>
+  <li>动力：作品曝光 + 分成 + 为学生提供创作工具</li>
+</ul>
+
+<h2 id="s3"><span class="num">3</span> 产品体系</h2>
+
+<h3>三层渐进架构</h3>
+<p>借鉴乐高产品分级（得宝→经典→科技件），本产品分三层，约束度递减、自由度递增：</p>
+
+<div class="card">
+<h4><span class="badge badge-l">L1</span>标准模板（3-5 岁）—— "按图搭"</h4>
+<ul>
+  <li><strong>孩子做什么</strong>：选角色颜色/表情 → 每页选场景 → 涂色 → 录一句口述</li>
+  <li><strong>AI 角色</strong>：给 2-3 个场景/情节选项让孩子选</li>
+  <li><strong>故事主线</strong>：预设骨架（如"小恐龙去冒险"8 页结构）</li>
+  <li><strong>门槛</strong>：极低，全程点选+涂色，不碰文字</li>
+  <li><strong>对应乐高</strong>：得宝大颗粒，按图搭建</li>
+</ul>
+</div>
+
+<div class="card">
+<h4><span class="badge badge-l">L2</span>自由搭建（5-7 岁）—— "自由拼"</h4>
+<ul>
+  <li><strong>孩子做什么</strong>：从角色库选角色 → 从场景库选背景 → AI 生成情节分支选项 → 孩子选走向 → 涂色/配饰</li>
+  <li><strong>AI 角色</strong>：根据"角色+场景"动态生成情节发展选项</li>
+  <li><strong>门槛</strong>：中，需认字看选项、能操作 pad</li>
+  <li><strong>对应乐高</strong>：经典系列，自由拼装</li>
+</ul>
+</div>
+
+<div class="card">
+<h4><span class="badge badge-l">L3</span>自主创作（7-11 岁）—— "自己造件"</h4>
+<ul>
+  <li><strong>孩子做什么</strong>：自己画/描述角色 → AI 生成立绘 → 自己编故事主线 → 设计互动关卡 → 导出</li>
+  <li><strong>AI 角色</strong>：辅助翻译/配音/拆分页/生成分支（助手而非主导）</li>
+  <li><strong>门槛</strong>：高，但这是"学 AI"真正发生的层级</li>
+  <li><strong>对应乐高</strong>：科技件，自己设计结构</li>
+</ul>
+</div>
+
+<div class="card orange">
+<h4>未来延伸：L4 年轻人创作（12+）</h4>
+<ul>
+  <li>L3 用户长大后自然过渡，带着平台熟悉度和情感</li>
+  <li>核心引擎从"零件库"转向"社区+分发"</li>
+  <li>共享底层技术（故事生成/配音/互动/导出）</li>
+  <li><strong>定位为北极星愿景，当前不投入，作为儿童线的用户孵化器价值存在</strong></li>
+</ul>
+</div>
+
+<h3>核心交互：AI 生成"半成品"而非"成品"</h3>
+<p>产品最核心的设计原则：<strong>AI 不生成成品，AI 生成让孩子参与完成的半成品</strong>。</p>
+<table>
+  <tr><th>AI 生成</th><th>孩子完成</th></tr>
+  <tr><td>场景线稿/轮廓</td><td>涂色</td></tr>
+  <tr><td>角色选项</td><td>选择+命名</td></tr>
+  <tr><td>情节分支</td><td>选走向</td></tr>
+  <tr><td>双语翻译/配音</td><td>口述原文</td></tr>
+</table>
+<p>这同时解决：AI 同质化（最终画面有孩子手作）、孩子成就感（"这是我涂的"）、质量可控（AI 底稿稳定）。</p>
+
+<h2 id="s4"><span class="num">4</span> 留存引擎</h2>
+
+<h3>核心问题</h3>
+<p>创作型产品天然低频（vs 早教的被动消费高频）。本产品不能用早教的"勾引"逻辑，需构建不同的留存引擎。</p>
+
+<h3>留存公式</h3>
+<div class="formula">连载角色（情感连接 → 想继续）
+  + 轻量创作（每次一页/一个场景，不累 → 能高频）
+  + 被看见的反馈（展示给家人 → 成就感）
+  + 互动可重玩（游戏/双语 → 反复看）
+  = 孩子一直想着做</div>
+
+<h3>四大机制</h3>
+
+<h4>1. 连载角色（情感锚点）</h4>
+<ul>
+  <li>孩子第一周创造"小恐龙豆豆"，之后持续追更"豆豆接下来去哪"</li>
+  <li>同一角色 + 不同场景/情节 = 无限续集</li>
+  <li>"我的故事还没讲完"是最强的内在驱动力</li>
+</ul>
+
+<h4>2. 轻量创作单位</h4>
+<ul>
+  <li>不以"做完整绘本"为单位（太重，一周做不了一本）</li>
+  <li>以"做一页/一个场景"为单位（每天 10 分钟）</li>
+  <li>一页页积累 → 自动拼成本 → 持续有新内容</li>
+</ul>
+
+<h4>3. 社交反馈循环</h4>
+<pre><code>孩子创作 → 成品展示给爸妈/小伙伴 → 收到反馈（惊叹/点赞）
+  → 成就感 → 想再做一本更好的 → 回到创作</code></pre>
+<ul>
+  <li>每完成一页提示"给爸妈看看！"</li>
+  <li>完成一本有"作品发布会"仪式（生成分享二维码）</li>
+  <li>作品集 + 进步可见（"你上个月画的 vs 这个月"）</li>
+</ul>
+
+<h4>4. 互动可重玩</h4>
+<ul>
+  <li>每页互动游戏（找不同/点选答题）让孩子反复玩</li>
+  <li>双语配音（中文听一遍、英文听一遍）</li>
+  <li>分享给不同的人看 = 多次观看</li>
+</ul>
+
+<h2 id="s5"><span class="num">5</span> 商业模式</h2>
+
+<h3>价值主张（对父母）</h3>
+<blockquote><strong>不是"又一个 AI 工具"，是"把你孩子的涂色和故事，变成一本会说话的绘本"。</strong></blockquote>
+<p>一个产出，同时证明三件父母分别花三门课的钱才能看到的事：</p>
+<table>
+  <tr><th>父母的付费动机</th><th>本产品的证据</th></tr>
+  <tr><td>孩子有创造力吗</td><td>一本完整的故事作品</td></tr>
+  <tr><td>孩子英语有进步吗</td><td>中英双语配音的绘本</td></tr>
+  <tr><td>孩子会用 AI 吗</td><td>用 AI 辅助创作的完整过程</td></tr>
+</table>
+
+<h3>定价策略</h3>
+<p><strong>免费层</strong>：做 1 本完整绘本（体验完整流程 + 拿到能分享的成品）<br>
+→ 父母在免费做第一本时，如果出现"孩子兴奋地给爸妈看自己作品"的瞬间，转化发生</p>
+<table>
+  <tr><th>层级</th><th>定价（推断，待验证）</th><th>内容</th></tr>
+  <tr><td>L1 会员</td><td>月费 29-49 / 年费 199-299</td><td>全部模板 + 角色库 + 持续创作</td></tr>
+  <tr><td>L2 会员</td><td>含在订阅</td><td>自由搭建 + 扩展零件库</td></tr>
+  <tr><td>L3 高级</td><td>高级订阅/单本权</td><td>自主创作 + AI 辅助 + 去水印</td></tr>
+</table>
+<p><strong>定价逻辑</strong>：比兴趣班便宜一个数量级（父母觉得"试试不亏"），比纯内容订阅贵一点（因为产出是孩子自己的作品，价值感更高）。</p>
+
+<h3>内容供给经济</h3>
+<pre><code>第一阶段：AI 生成冷启动零件（5-8 主题 × 角色+场景，扁平贴纸风/简笔涂色风）
+第二阶段：画室合作，老师/学生贡献素材（统一画风规格，标注出处，分成）
+第三阶段：L3 优秀作品反哺为 L1/L2 零件（UGC 闭环）</code></pre>
+<p>壁垒：积累 50+ 角色 100+ 场景后，内容库本身是护城河。</p>
+
+<h2 id="s6"><span class="num">6</span> 技术现状与差距</h2>
+
+<h3>已有（当前工具链）</h3>
+<ul>
+  <li>故事 JSON 生成（智谱 GLM）</li>
+  <li>中英文配音（edge-tts，哈希缓存）</li>
+  <li>图片上传 + 导出时自动压缩（Pillow 1080p）</li>
+  <li>互动游戏（点选/计数，WebAudio 反馈）</li>
+  <li>导出独立 HTML（离线可用、手机打开即看）</li>
+  <li>工作台 Web UI（5 Tab：生成/配图/配音/游戏/导出）</li>
+</ul>
+
+<h3>待建（L1 所需）</h3>
+<table>
+  <tr><th>能力</th><th>说明</th><th>优先级</th></tr>
+  <tr><td>角色库 + 场景库</td><td>预制零件，AI 冷启动生成</td><td><span class="badge badge-p0">P0</span></td></tr>
+  <tr><td>情节选项生成</td><td>AI 从"生成全文"改为"生成分支选项"</td><td><span class="badge badge-p0">P0</span></td></tr>
+  <tr><td>轻量涂鸦层</td><td>孩子在预设线稿上涂色</td><td><span class="badge badge-p0">P0</span></td></tr>
+  <tr><td>口述转文字</td><td>孩子语音录入，AI 整理成文本</td><td><span class="badge badge-p1">P1</span></td></tr>
+  <tr><td>儿童化 UI</td><td>极简、图标化、大按钮、少文字</td><td><span class="badge badge-p0">P0</span></td></tr>
+  <tr><td>作品集</td><td>时间线/进步对比</td><td><span class="badge badge-p1">P1</span></td></tr>
+  <tr><td>分享二维码</td><td>一键生成可分享链接</td><td><span class="badge badge-p1">P1</span></td></tr>
+</table>
+
+<h3>关键技术风险</h3>
+<ul>
+  <li><strong>画风一致性</strong>：角色和场景必须风格统一才能"搭"在一起。需选定一种 AI 稳定生成的风格（扁平贴纸风/简笔涂色风）</li>
+  <li><strong>儿童 UX</strong>：现有工作台是给成年人用的，L1 需要完全重设计</li>
+  <li><strong>内容安全</strong>：给孩子的工具，AI 生成内容需过滤</li>
+</ul>
+
+<h2 id="s7"><span class="num">7</span> 切入策略与验证路径</h2>
+
+<h3>切入点：L1 标准模板（3-5 岁）</h3>
+<p><strong>理由</strong>：</p>
+<ol>
+  <li>有现成真实用户（创始人孩子 4-5 岁），可日常观察验证</li>
+  <li>技术复杂度最低（孩子不碰文字/复杂操作）</li>
+  <li>3-6 岁是早教消费高峰，父母付费意愿最强</li>
+  <li>L1 的核心交互（选零件+涂色+自动生成）是三层共用地基，做了不浪费</li>
+  <li>做通后往上延伸有路径</li>
+</ol>
+
+<h3>分阶段验证</h3>
+
+<div class="card green">
+<h4>阶段 0：纸面验证（0 代码，1 周）</h4>
+<ul>
+  <li>创始人用现有工具 + 自己孩子做实验</li>
+  <li>让孩子画几张画+讲故事 → 用工作台上传/录入/配音/导出</li>
+  <li>观察：孩子看到"自己的画变成有声绘本"是否兴奋？父母做"拍照录音上传"是否嫌烦？</li>
+</ul>
+<p><strong>判断标准</strong>：孩子兴奋 + 父母不烦 → 值得继续</p>
+</div>
+
+<div class="card orange">
+<h4>阶段 1：L1 MVP（验证留存）</h4>
+<ul>
+  <li>做最小可用 L1：5 个角色 + 10 个场景 + 涂色 + 自动生成</li>
+  <li>找 5-10 个家庭试用</li>
+</ul>
+<p><strong>判断标准</strong>：孩子是否在一周内主动想做第二本？父母是否愿意付费？</p>
+</div>
+
+<div class="card">
+<h4>阶段 2：验证付费</h4>
+<ul>
+  <li>加免费层 + 付费层</li>
+</ul>
+<p><strong>判断标准</strong>：免费→付费转化率 &gt; 5%？月留存 &gt; 30%？</p>
+</div>
+
+<div class="card">
+<h4>阶段 3：扩展</h4>
+<ul>
+  <li>验证通过后：扩充零件库、引入画室合作、向 L2 延伸</li>
+</ul>
+</div>
+
+<h2 id="s8"><span class="num">8</span> 风险与对策</h2>
+<table>
+  <tr><th>风险</th><th>概率</th><th>对策</th></tr>
+  <tr><td>孩子做完一本就不做了（留存失败）</td><td>中高</td><td>连载设计 + 社交反馈循环，阶段1重点验证</td></tr>
+  <tr><td>父母不认知价值</td><td>中</td><td>免费层制造"价值认知瞬间"+ 案例营销</td></tr>
+  <tr><td>AI 画风不一致</td><td>中</td><td>选定简笔/贴纸风，AI 一致性较好</td></tr>
+  <tr><td>内容供给不足（零件太少）</td><td>中</td><td>AI 批量冷启动 + 画室合作分阶段</td></tr>
+  <tr><td>大厂入场</td><td>低中</td><td>内容库是壁垒，先发积累角色/场景护城河</td></tr>
+  <tr><td>7-11岁方向（学AI）伪需求</td><td>中</td><td>L1 先验证基础模式，L3 单独验证后再投入</td></tr>
+</table>
+
+<h2 id="s9"><span class="num">9</span> 北极星愿景</h2>
+<blockquote><strong>从儿童绘本工具，成长为全年龄段的创意故事平台。</strong></blockquote>
+<pre><code>当下：L1 儿童绘本乐高（3-5 岁）→ 验证模式、产生收入
+中期：L2-L3 扩展至 5-11 岁 → 沉淀技术、积累用户
+远期：L4 延伸至 12+ 青少年/年轻人 → 创作分享社区</code></pre>
+<p>儿童线不只是变现业务，它还是未来年轻人线的<strong>用户孵化器</strong>——L3 用户长大自然过渡到 L4，带着平台熟悉度和情感，比从零拉新用户容易十倍。</p>
+<p>底层技术（故事生成/配音/互动/导出）全年龄段复用，只是包装不同。</p>
+
+<h2 id="s10"><span class="num">10</span> 关键决策共识</h2>
+<div class="card green">
+<p>本次讨论形成的 8 条核心共识：</p>
+<ol>
+  <li><strong>核心定位</strong>：绘本版乐高，孩子选零件+组合+个性化，AI 辅助生成</li>
+  <li><strong>AI 角色</strong>：生成"半成品"（线稿/选项/翻译），非"成品"</li>
+  <li><strong>分层</strong>：L1（3-5按图搭）→ L2（5-7自由拼）→ L3（7-11自己造件）→ L4（12+创作社区）</li>
+  <li><strong>切入点</strong>：L1 先做，用创始人孩子验证</li>
+  <li><strong>内容供给</strong>：AI 冷启动 → 画室合作 → UGC 反哺</li>
+  <li><strong>变现</strong>：父母订阅，免费尝鲜→付费解锁角色库/持续创作</li>
+  <li><strong>留存引擎</strong>：连载角色 + 轻量创作 + 社交反馈 + 互动可重玩</li>
+  <li><strong>年轻人线</strong>：北极星愿景，当前不投入，儿童线孵化未来用户</li>
+</ol>
+</div>
+
+<div class="divider"></div>
+<div class="footer">
+  <p>本文档基于 2025-06-25 战略讨论整理</p>
+  <p>部分市场判断置信度中等，需通过阶段 0-1 验证后修正</p>
+</div>
+
+</div>
+</body>
+</html>
