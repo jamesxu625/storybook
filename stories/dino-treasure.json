@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title_zh": "小恐龙寻宝记",
+    "title_en": "Little Dino's Treasure Hunt",
+    "author": "AI Storyteller",
+    "style": "cute cartoon baby dinosaur illustration, soft pastel watercolor style, warm colors, wide landscape 16:9 composition, the main character is a small green baby dinosaur with orange spots, big round eyes, and a tiny yellow backpack",
+    "aspect": "16:9"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "type": "cover",
+      "zh": ["小恐龙寻宝记"],
+      "en": ["Little Dino's Treasure Hunt"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute small green baby dinosaur with orange spots and a tiny yellow backpack, holding a rolled-up treasure map, standing in a wide sunny meadow with colorful flowers stretching to the horizon, excited expression, big round eyes, butterflies around, panoramic view"
+    },
+    {
+      "id": "p1",
+      "type": "story",
+      "zh": ["小恐龙在花园里挖土的时候", "发现了一张藏宝图！"],
+      "en": ["While digging in the garden,", "Little Dino found a treasure map!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots digging in a sprawling flower garden, discovering a rolled-up old parchment treasure map half-buried in soil, daisies and sunflowers filling the wide background, surprised excited expression, panoramic garden view"
+    },
+    {
+      "id": "p2",
+      "type": "story",
+      "zh": ["第一关：彩虹森林", "找到三颗发光的彩色石头！"],
+      "en": ["Level 1: Rainbow Forest", "Find three glowing colorful stones!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots and yellow backpack walking through a magical wide rainbow forest, three glowing colorful stones (red blue green) scattered among rainbow-colored trees and mushrooms across the panorama, sparkles in the air"
+    },
+    {
+      "id": "p3",
+      "type": "story",
+      "zh": ["第二关：泡泡湖", "数一数湖里有几只小乌龟？"],
+      "en": ["Level 2: Bubble Lake", "Count the baby turtles in the lake!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots standing at the edge of a wide magical lake with floating bubbles, several cute baby turtles swimming across the panoramic water, lily pads, lotus flowers, sparkly water stretching to distant shore"
+    },
+    {
+      "id": "p4",
+      "type": "story",
+      "zh": ["第三关：云朵山", "踩着棉花糖一样的云朵往上爬！"],
+      "en": ["Level 3: Cloud Mountain", "Climb up on fluffy marshmallow clouds!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots climbing up fluffy pink and white cotton-candy clouds like stairs across a wide sky panorama, blue sky with distant mountains, small birds and stars scattered around, joyful expression"
+    },
+    {
+      "id": "p5",
+      "type": "story",
+      "zh": ["第四关：蘑菇谷", "帮小恐龙把蘑菇从小到大排好！"],
+      "en": ["Level 4: Mushroom Valley", "Help sort the mushrooms from small to big!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots in a wide magical valley full of colorful mushrooms of different sizes (tiny to huge) stretching across the panorama, some red some purple some blue with white spots, thinking expression"
+    },
+    {
+      "id": "p6",
+      "type": "story",
+      "zh": ["第五关：萤火虫洞", "跟着最亮的萤火虫走！"],
+      "en": ["Level 5: Firefly Cave", "Follow the brightest firefly!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots exploring a wide dark magical cave filled with hundreds of glowing fireflies and bioluminescent crystals across the panoramic view, one especially bright golden firefly leading the way, mystical blue and purple tones"
+    },
+    {
+      "id": "p7",
+      "type": "story",
+      "zh": ["穿过萤火虫洞", "小恐龙终于来到了宝藏的地方！"],
+      "en": ["Through the firefly cave,", "Little Dino finally reached the treasure!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots standing before a large glowing golden treasure chest in a wide magical cave chamber, warm golden light emanating from the chest illuminating the panoramic cavern, sparkle effects, excited anticipation expression"
+    },
+    {
+      "id": "p8",
+      "type": "story",
+      "zh": ["打开宝箱一看——", "里面全是小恐龙小时候的玩具和照片！"],
+      "en": ["Opening the treasure chest —", "It's full of Little Dino's childhood toys and photos!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a cute green baby dinosaur with orange spots opening a golden treasure chest in a wide room, baby toys (teddy bear, rattle, building blocks, small shoes) and photo albums spilling out across the floor, warm golden glow filling the panoramic view, surprised and happy expression"
+    },
+    {
+      "id": "p9",
+      "type": "story",
+      "zh": ["恐龙爸爸和恐龙妈妈笑着说：", "你的每一个瞬间，都是我们最珍贵的宝藏！"],
+      "en": ["Dino Dad and Dino Mom smiled:", "Every moment of yours is our most precious treasure!"],
+      "image_file": "",
+      "prompt": "Wide landscape scene, a warm family panorama with a big green dinosaur dad and mom hugging the small green baby dinosaur with orange spots, surrounded by scattered baby toys and photo albums showing baby dino growing up, warm golden sunset light filling the wide background, love hearts floating"
+    },
+    {
+      "id": "p10",
+      "type": "ending",
+      "zh": ["原来最好的宝藏", "就是爸爸妈妈满满的爱！"],
+      "en": ["The greatest treasure of all", "is Mom and Dad's love!"],
+      "image_file": "",
+      "prompt": "Wide panoramic landscape scene, a cute green baby dinosaur family (baby, mom, dad) sitting together looking at a photo album on a wide hilltop at sunset, warm orange and pink sky stretching across the entire horizon, love hearts floating in the air, cozy and heartwarming ending, fireflies around"
+    }
+  ]
+}

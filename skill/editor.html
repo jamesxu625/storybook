@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>绘本编辑器 | Picture Book Editor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f5f5f5; color: #333; height: 100vh; overflow: hidden; }
+
+  /* Layout */
+  .app { display: flex; height: 100vh; }
+  .sidebar { width: 200px; background: #1a1a2e; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .toolbar { padding: 12px 20px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; }
+  .editor-area { flex: 1; display: flex; overflow: hidden; }
+  .preview-panel { width: 320px; background: #111; display: flex; align-items: center; justify-content: center; padding: 20px; flex-shrink: 0; }
+  .edit-panel { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Sidebar */
+  .sidebar-header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-header h2 { font-size: 14px; opacity: 0.6; margin-bottom: 4px; }
+  .sidebar-header h3 { font-size: 16px; }
+  .page-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .page-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
+  .page-item:hover { background: rgba(255,255,255,0.08); }
+  .page-item.active { background: rgba(255,180,50,0.25); }
+  .page-thumb { width: 36px; height: 48px; border-radius: 4px; background: #333; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #666; }
+  .page-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .page-info { font-size: 13px; line-height: 1.3; }
+  .page-info .num { opacity: 0.5; font-size: 11px; }
+  .page-info .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+  .has-img { color: #4ade80; }
+  .no-img { color: #f87171; }
+
+  /* Toolbar */
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: #f59e0b; color: white; }
+  .btn-primary:hover { background: #d97706; }
+  .btn-secondary { background: #e5e5e5; color: #333; }
+  .btn-secondary:hover { background: #d4d4d4; }
+  .btn-success { background: #22c55e; color: white; }
+  .btn-success:hover { background: #16a34a; }
+  .btn-danger { background: #ef4444; color: white; font-size: 12px; padding: 4px 10px; }
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+  .toolbar .spacer { flex: 1; }
+
+  /* Edit Panel */
+  .section { margin-bottom: 24px; }
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 10px; font-weight: 600; }
+  .text-group { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .text-group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .lang-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .lang-zh { background: #fef3c7; color: #92400e; }
+  .lang-en { background: #dbeafe; color: #1e40af; }
+  .text-line { width: 100%; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 15px; margin-bottom: 8px; font-family: inherit; resize: none; }
+  .text-line:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+  .prompt-box { background: #1e1e2e; color: #cdd6f4; border-radius: 12px; padding: 16px; position: relative; font-size: 13px; line-height: 1.6; }
+  .prompt-box .copy-btn { position: absolute; top: 10px; right: 10px; }
+
+  /* Image upload */
+  .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: white; }
+  .upload-zone:hover { border-color: #f59e0b; background: #fffbeb; }
+  .upload-zone.has-image { border-style: solid; border-color: #22c55e; padding: 10px; }
+  .upload-zone img { max-width: 100%; max-height: 200px; border-radius: 8px; }
+  .upload-zone .placeholder { color: #999; }
+  .upload-zone .placeholder .icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* Preview panel */
+  .phone-frame { width: 270px; height: 480px; background: #000; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  .phone-screen { width: 100%; height: 100%; display: flex; flex-direction: column; }
+  .phone-screen img { width: 100%; flex: 1; object-fit: cover; }
+  .phone-text-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px; background: linear-gradient(transparent, rgba(0,0,0,0.85)); color: white; }
+  .phone-text-overlay .zh-text { font-size: 13px; margin-bottom: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+  .phone-text-overlay .en-text { font-size: 10px; opacity: 0.8; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+  .phone-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #555; font-size: 13px; flex-direction: column; gap: 8px; }
+
+  /* Welcome screen */
+  .welcome { display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 20px; padding: 40px; text-align: center; }
+  .welcome h1 { font-size: 28px; color: #1a1a2e; }
+  .welcome p { color: #666; max-width: 400px; line-height: 1.6; }
+  .drop-zone { border: 3px dashed #ccc; border-radius: 20px; padding: 60px 40px; cursor: pointer; transition: all 0.3s; max-width: 500px; width: 100%; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #f59e0b; background: #fffbeb; }
+  .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: white; border-radius: 16px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+  .modal h3 { margin-bottom: 16px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; z-index: 9999; animation: fadeInUp 0.3s; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Welcome Screen -->
+  <div class="welcome" id="welcomeScreen">
+    <h1>📚 绘本编辑器</h1>
+    <p>加载故事脚本 JSON 文件开始编辑。支持上传 AI 生成的图片、调整文字、预览效果，最终一键导出交互式绘本 HTML。</p>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('jsonInput').click()">
+      <div class="icon">📂</div>
+      <div style="font-size: 16px; margin-bottom: 8px;">点击选择或拖放故事脚本 JSON</div>
+      <div style="font-size: 13px; color: #999;">支持 .json 格式的故事文件</div>
+    </div>
+    <input type="file" id="jsonInput" accept=".json" class="hidden">
+  </div>
+
+  <!-- Editor Screen -->
+  <div class="app hidden" id="editorScreen">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>📚 绘本编辑器</h2>
+        <h3 id="bookTitle">-</h3>
+      </div>
+      <div class="page-list" id="pageList"></div>
+      <div style="padding: 12px;">
+        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="showWelcome()">
+          📂 加载其他故事
+        </button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button class="btn btn-secondary btn-small" onclick="prevPage()">← 上一页</button>
+        <span id="pageIndicator" style="font-size: 14px; font-weight: 600;">1 / 11</span>
+        <button class="btn btn-secondary btn-small" onclick="nextPage()">下一页 →</button>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" onclick="previewAll()">👁 全部预览</button>
+        <button class="btn btn-success" onclick="exportBook()">📦 导出绘本</button>
+      </div>
+
+      <!-- Editor Area -->
+      <div class="editor-area">
+        <!-- Edit Panel -->
+        <div class="edit-panel" id="editPanel"></div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+          <div class="phone-frame">
+            <div class="phone-screen" id="phoneScreen"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="imgInput" accept="image/*" class="hidden">
+
+<script>
+// ========== State ==========
+let story = null;
+let currentPage = 0;
+let pageImages = {}; // { pageId: dataURL }
+
+// ========== Init ==========
+const jsonInput = document.getElementById('jsonInput');
+const imgInput = document.getElementById('imgInput');
+const dropZone = document.getElementById('dropZone');
+
+jsonInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) loadJSON(e.target.files[0]);
+});
+
+imgInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleImageUpload(e.target.files[0]);
+});
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) loadJSON(e.dataTransfer.files[0]);
+});
+
+function loadJSON(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      story = JSON.parse(e.target.result);
+      currentPage = 0;
+      pageImages = {};
+      showEditor();
+    } catch (err) {
+      toast('JSON 解析失败: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ========== Welcome / Editor toggle ==========
+function showWelcome() {
+  document.getElementById('welcomeScreen').classList.remove('hidden');
+  document.getElementById('editorScreen').classList.add('hidden');
+  jsonInput.value = '';
+}
+
+function showEditor() {
+  document.getElementById('welcomeScreen').classList.add('hidden');
+  document.getElementById('editorScreen').classList.remove('hidden');
+  document.getElementById('bookTitle').textContent = story.meta.title_zh;
+  renderPageList();
+  renderPage();
+}
+
+// ========== Page List ==========
+function renderPageList() {
+  const list = document.getElementById('pageList');
+  list.innerHTML = story.pages.map((p, i) => {
+    const hasImg = !!pageImages[p.id];
+    const title = p.zh[0] || p.id;
+    return `<div class="page-item ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
+      <div class="page-thumb">
+        ${hasImg ? `<img src="${pageImages[p.id]}">` : (i + 1)}
+      </div>
+      <div class="page-info">
+        <div class="num ${hasImg ? 'has-img' : 'no-img'}">${hasImg ? '✓' : '○'} ${p.type === 'cover' ? '封面' : p.type === 'ending' ? '结尾' : '第' + i + '页'}</div>
+        <div class="title">${title}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goToPage(i) {
+  currentPage = i;
+  renderPageList();
+  renderPage();
+}
+
+function prevPage() { if (currentPage > 0) goToPage(currentPage - 1); }
+function nextPage() { if (currentPage < story.pages.length - 1) goToPage(currentPage + 1); }
+
+// ========== Page Editor ==========
+function renderPage() {
+  const p = story.pages[currentPage];
+  document.getElementById('pageIndicator').textContent = `${currentPage + 1} / ${story.pages.length}`;
+
+  const hasImg = !!pageImages[p.id];
+  const panel = document.getElementById('editPanel');
+
+  panel.innerHTML = `
+    <!-- Image Section -->
+    <div class="section">
+      <div class="section-title">🖼 页面图片</div>
+      <div class="upload-zone ${hasImg ? 'has-image' : ''}" id="uploadZone" onclick="document.getElementById('imgInput').click()">
+        ${hasImg
+          ? `<img src="${pageImages[p.id]}"><div style="margin-top:8px;font-size:12px;color:#22c55e;">点击更换图片</div>`
+          : `<div class="placeholder"><div class="icon">📷</div><div>点击上传 AI 生成的图片</div><div style="font-size:12px;margin-top:4px;color:#bbb;">推荐 1920x1080 横版图片</div></div>`
+        }
+      </div>
+    </div>
+
+    <!-- Chinese Text -->
+    <div class="section">
+      <div class="section-title">🇨🇳 中文文本</div>
+      <div class="text-group">
+        <div class="text-group-header"><span class="lang-badge lang-zh">中文</span></div>
+        ${p.zh.map((line, i) => `
+          <textarea class="text-line" rows="1" data-lang="zh" data-idx="${i}"
+            oninput="updateText('zh', ${i}, this.value)">${line}</textarea>
+        `).join('')}
+        <button class="btn btn-secondary btn-small" onclick="addLine('zh')">+ 添加行</button>
+      </div>
+    </div>
+
+    <!-- English Text -->
+    <div class="section">
+      <div class="section-title">🇬🇧 English Text</div>
+      <div class="text-group">
+        <div class="text-group-header"><span class="lang-badge lang-en">EN</span></div>
+        ${p.en.map((line, i) => `
+          <textarea class="text-line" rows="1" data-lang="en" data-idx="${i}"
+            oninput="updateText('en', ${i}, this.value)">${line}</textarea>
+        `).join('')}
+        <button class="btn btn-secondary btn-small" onclick="addLine('en')">+ 添加行</button>
+      </div>
+    </div>
+
+    <!-- AI Prompt -->
+    <div class="section">
+      <div class="section-title">🎨 AI 生图提示词</div>
+      <div class="prompt-box">
+        <button class="btn btn-secondary btn-small copy-btn" onclick="copyPrompt()">📋 复制</button>
+        <div style="padding-right: 60px;">${story.meta.style}, ${p.prompt}</div>
+      </div>
+    </div>
+
+    <!-- Audio Status -->
+    <div class="section">
+      <div class="section-title">🔊 配音状态</div>
+      <div class="text-group">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:140px;">
+            ${p.audio_zh
+              ? `<div style="color:#22c55e;font-size:13px;margin-bottom:8px;">✓ 中文配音已生成</div>
+                 <button class="btn btn-secondary btn-small" onclick="previewAudio('zh')">▶ 试听中文</button>`
+              : `<div style="color:#999;font-size:13px;">○ 中文配音未生成</div>`}
+          </div>
+          <div style="flex:1;min-width:140px;">
+            ${p.audio_en
+              ? `<div style="color:#22c55e;font-size:13px;margin-bottom:8px;">✓ English voice ready</div>
+                 <button class="btn btn-secondary btn-small" onclick="previewAudio('en')">▶ Preview EN</button>`
+              : `<div style="color:#999;font-size:13px;">○ English voice not generated</div>`}
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#999;line-height:1.6;">
+          💡 生成配音：<code style="background:#f4f4f4;padding:1px 5px;border-radius:3px;">python skill/tts.py stories/${story.meta.title_en || 'your-story'}.json</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Game -->
+    <div class="section">
+      <div class="section-title">🎮 互动小游戏</div>
+      <div class="text-group">
+        <select id="gameTypeSel" onchange="setGameType(this.value)" style="width:100%;padding:8px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;margin-bottom:12px;">
+          <option value="none">无互动</option>
+          <option value="choice">点选答题</option>
+          <option value="count">数一数 / 计数</option>
+        </select>
+        <div id="gameEditor"></div>
+      </div>
+    </div>
+  `;
+
+  // Initialize game editor for this page
+  initGameEditor();
+
+  // Update phone preview
+  renderPhonePreview();
+
+  // Auto-resize textareas
+  panel.querySelectorAll('.text-line').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+}
+
+function updateText(lang, idx, value) {
+  story.pages[currentPage][lang][idx] = value;
+  renderPhonePreview();
+  renderPageList();
+}
+
+function addLine(lang) {
+  story.pages[currentPage][lang].push('');
+  renderPage();
+}
+
+function copyPrompt() {
+  const p = story.pages[currentPage];
+  const text = story.meta.style + ', ' + p.prompt;
+  navigator.clipboard.writeText(text).then(() => toast('提示词已复制'));
+}
+
+// ========== Audio Preview ==========
+let previewAudioEl = null;
+function previewAudio(lang) {
+  const p = story.pages[currentPage];
+  const src = p['audio_' + lang];
+  if (!src) return;
+  if (previewAudioEl) { previewAudioEl.pause(); previewAudioEl = null; }
+  previewAudioEl = new Audio(src);
+  previewAudioEl.play().catch(() => toast('播放失败，请检查浏览器'));
+}
+
+// ========== Interactive Game Editor ==========
+function curPage() { return story.pages[currentPage]; }
+
+function ensureGameObj() {
+  const p = curPage();
+  if (!p.game) p.game = { type: 'choice', prompt_zh: '', prompt_en: '', options: [] };
+  return p.game;
+}
+
+function initGameEditor() {
+  const g = curPage().game;
+  const sel = document.getElementById('gameTypeSel');
+  sel.value = (g && (g.type === 'choice' || g.type === 'count')) ? g.type : 'none';
+  renderGameEditor();
+}
+
+function setGameType(type) {
+  const p = curPage();
+  if (type === 'none') {
+    delete p.game;
+  } else {
+    if (!p.game || (p.game.type !== 'choice' && p.game.type !== 'count')) {
+      p.game = { type, prompt_zh: '', prompt_en: '', options: [] };
+    } else {
+      p.game.type = type;
+    }
+    // Count mode seeds 1..3 if empty; keep choice as-is.
+    if (type === 'count' && (!p.game.options || !p.game.options.length)) {
+      p.game.options = [1,2,3].map((n,i)=>({label_zh:String(n),label_en:String(n),correct:i===0}));
+    }
+  }
+  renderGameEditor();
+}
+
+function renderGameEditor() {
+  const g = curPage().game;
+  const box = document.getElementById('gameEditor');
+  if (!g || (g.type !== 'choice' && g.type !== 'count')) { box.innerHTML = ''; return; }
+
+  const isCount = g.type === 'count';
+  box.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;color:#666;">问题（中文）</label>
+      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_zh)}" oninput="updateGame('prompt_zh', this.value)" placeholder="例：哪个是红色的花？">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;color:#666;">Question (EN)</label>
+      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_en)}" oninput="updateGame('prompt_en', this.value)" placeholder="e.g. Which one is the red flower?">
+    </div>
+    ${isCount ? `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <label style="font-size:12px;color:#666;">数字范围 1 →</label>
+        <input type="number" min="2" max="9" value="${g.options.length||3}" style="width:64px;padding:6px;border:1px solid #e5e5e5;border-radius:8px;" oninput="setCountRange(this.value)">
+        <span style="font-size:11px;color:#999;">（点选项标记正确答案）</span>
+      </div>
+    ` : ''}
+    <div style="font-size:12px;color:#999;margin-bottom:6px;">选项（点击左侧圆点标记正确答案，✓ 表示当前正确）</div>
+    <div id="gameOptions">${renderOptions()}</div>
+    ${!isCount ? `<button class="btn btn-secondary btn-small" onclick="addGameOption()" style="margin-top:8px;">+ 添加选项</button>` : ''}
+    <div style="margin-top:10px;font-size:11px;color:#999;">📱 在导出的绘本里，游戏会浮在页面中央；答对后会显示「🔊 听这个故事」按钮。</div>
+  `;
+}
+
+function renderOptions() {
+  const g = curPage().game;
+  return g.options.map((o, i) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span onclick="markCorrect(${i})" style="cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:${o.correct?'#22c55e':'#e5e5e5'};color:white;flex-shrink:0;">${o.correct?'✓':''}</span>
+      <input class="text-line" style="flex:1;padding:6px 10px;font-size:14px;margin-bottom:0;" value="${escAttr(o.label_zh)}" oninput="updateOption(${i},'label_zh',this.value)" placeholder="${curPage().game.type==='count'?'数字':'中文/emoji'}">
+      ${curPage().game.type==='choice' ? `<input class="text-line" style="flex:1;padding:6px 10px;font-size:14px;margin-bottom:0;" value="${escAttr(o.label_en)}" oninput="updateOption(${i},'label_en',this.value)" placeholder="EN">` : ''}
+      <button class="btn btn-danger" onclick="removeOption(${i})" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateGame(field, value) { curPage().game[field] = value; }
+function updateOption(i, field, value) { curPage().game.options[i][field] = value; }
+function markCorrect(i) {
+  const opts = curPage().game.options;
+  opts.forEach((o, k) => { o.correct = (k === i); });
+  renderGameEditor();
+}
+function addGameOption() {
+  curPage().game.options.push({ label_zh: '', label_en: '', correct: false });
+  renderGameEditor();
+}
+function removeOption(i) {
+  const opts = curPage().game.options;
+  const wasCorrect = opts[i].correct;
+  opts.splice(i, 1);
+  if (wasCorrect && opts.length) opts[0].correct = true;
+  renderGameEditor();
+}
+function setCountRange(n) {
+  n = Math.max(2, Math.min(9, parseInt(n, 10) || 3));
+  const g = curPage().game;
+  const correctVal = (g.options.find(o=>o.correct) || {}).label_zh || '1';
+  g.options = [];
+  for (let k = 1; k <= n; k++) {
+    g.options.push({ label_zh: String(k), label_en: String(k), correct: String(k) === correctVal });
+  }
+  renderGameEditor();
+}
+
+// HTML attribute escape for inline values.
+function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ========== Image Upload ==========
+function handleImageUpload(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pageImages[story.pages[currentPage].id] = e.target.result;
+    renderPage();
+    renderPageList();
+    toast('图片已上传');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ========== Phone Preview ==========
+function renderPhonePreview() {
+  const p = story.pages[currentPage];
+  const hasImg = !!pageImages[p.id];
+  const screen = document.getElementById('phoneScreen');
+
+  screen.innerHTML = `
+    ${hasImg ? `<img src="${pageImages[p.id]}">` : `<div class="phone-empty"><div style="font-size:36px">📷</div><div>暂无图片</div></div>`}
+    <div class="phone-text-overlay">
+      ${p.zh.map(l => `<div class="zh-text">${l}</div>`).join('')}
+      ${p.en.map(l => `<div class="en-text">${l}</div>`).join('')}
+    </div>
+  `;
+}
+
+// ========== Preview All ==========
+function previewAll() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  let previewIdx = 0;
+  const renderPreview = () => {
+    const p = story.pages[previewIdx];
+    const hasImg = !!pageImages[p.id];
+    overlay.innerHTML = `<div class="modal" style="max-width:400px;padding:0;overflow:hidden;border-radius:16px;">
+      <div style="position:relative;width:100%;aspect-ratio:9/16;background:#111;">
+        ${hasImg ? `<img src="${pageImages[p.id]}" style="width:100%;height:100%;object-fit:cover;">` : ''}
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,0.85));color:white;">
+          ${p.zh.map(l => `<div style="font-size:16px;margin-bottom:6px;text-shadow:1px 1px 3px rgba(0,0,0,0.8);">${l}</div>`).join('')}
+          <div style="height:8px"></div>
+          ${p.en.map(l => `<div style="font-size:12px;opacity:0.8;text-shadow:1px 1px 3px rgba(0,0,0,0.8);">${l}</div>`).join('')}
+        </div>
+        <div style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.5);color:white;padding:4px 10px;border-radius:12px;font-size:12px;">
+          ${previewIdx + 1} / ${story.pages.length}
+        </div>
+        ${previewIdx > 0 ? `<button onclick="event.stopPropagation();" id="prevP" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,0.4);color:white;font-size:18px;cursor:pointer;">‹</button>` : ''}
+        ${previewIdx < story.pages.length - 1 ? `<button onclick="event.stopPropagation();" id="nextP" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,0.4);color:white;font-size:18px;cursor:pointer;">›</button>` : ''}
+      </div>
+    </div>`;
+
+    const prevBtn = overlay.querySelector('#prevP');
+    const nextBtn = overlay.querySelector('#nextP');
+    if (prevBtn) prevBtn.onclick = (e) => { e.stopPropagation(); previewIdx--; renderPreview(); };
+    if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); previewIdx++; renderPreview(); };
+  };
+
+  renderPreview();
+  document.body.appendChild(overlay);
+}
+
+// ========== Export ==========
+function exportBook() {
+  const pagesWithData = story.pages.map(p => ({
+    ...p,
+    image: pageImages[p.id] || ''
+  }));
+
+  const bookData = { meta: story.meta, pages: pagesWithData };
+  const html = generateBookHTML(bookData);
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${story.meta.title_en || 'picture-book'}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('绘本已导出');
+}
+
+function generateBookHTML(data) {
+  const pagesJSON = JSON.stringify(data.pages);
+  const metaJSON = JSON.stringify(data.meta);
+
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>${data.meta.title_zh}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","Segoe UI",sans-serif;background:#111;color:white;height:100vh;height:100dvh;overflow:hidden;user-select:none}
+.book{display:flex;flex-direction:column;height:100%}
+.header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;z-index:10}
+.header span{font-size:12px;opacity:0.5}
+.auto-btn{padding:4px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.1);color:white;font-size:12px;cursor:pointer}
+.auto-btn.on{background:#f59e0b}
+.page-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.page{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity 0.4s,transform 0.4s}
+.page.exit{opacity:0;transform:scale(0.95)}
+.page.enter{opacity:0;transform:scale(1.05)}
+.page img{width:100%;height:100%;object-fit:cover}
+.text-bar{position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(transparent,rgba(0,0,0,0.8) 30%)}
+.zh{font-size:17px;margin-bottom:4px;text-shadow:1px 1px 3px rgba(0,0,0,0.9);line-height:1.5}
+.en{font-size:12px;opacity:0.75;text-shadow:1px 1px 3px rgba(0,0,0,0.9);line-height:1.4}
+.nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:none;background:rgba(0,0,0,0.35);color:white;font-size:22px;cursor:pointer;backdrop-filter:blur(4px);z-index:5;display:flex;align-items:center;justify-content:center}
+.nav-btn:hover{background:rgba(0,0,0,0.6)}
+.nav-prev{left:8px}
+.nav-next{right:8px}
+.controls{padding:10px 16px 16px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.audio-row{display:flex;gap:8px}
+.audio-btn{padding:8px 16px;border-radius:12px;border:none;background:rgba(255,255,255,0.12);color:white;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.audio-btn:hover{background:rgba(255,255,255,0.2)}
+.audio-btn.playing{background:#ef4444}
+.audio-btn.all{background:rgba(245,158,11,0.3)}
+.dots{display:flex;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);cursor:pointer;border:none;transition:all 0.3s}
+.dot.active{width:24px;border-radius:4px;background:#f59e0b}
+.hint{font-size:11px;opacity:0.3}
+.pulse{display:inline-flex;gap:2px;align-items:center}
+.pulse span{width:3px;height:10px;background:white;border-radius:1px;animation:pulse 0.6s infinite alternate}
+.pulse span:nth-child(2){animation-delay:0.15s}
+.pulse span:nth-child(3){animation-delay:0.3s}
+@keyframes pulse{from{height:4px}to{height:12px}}
+/* Interactive game */
+.game{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90%,440px);max-height:70%;background:rgba(15,15,30,0.92);border:1px solid rgba(255,255,255,0.15);border-radius:18px;padding:18px 16px;box-shadow:0 12px 40px rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px;z-index:6;animation:gameIn 0.3s}
+@keyframes gameIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}
+.game-q{font-size:18px;font-weight:600;text-align:center;line-height:1.4;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
+.game-q .en{display:block;font-size:12px;font-weight:400;opacity:0.7;margin-top:3px;text-shadow:none}
+.game-opts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.game-opt{min-width:64px;padding:14px 16px;border-radius:14px;border:2px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:white;font-size:22px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.game-opt:hover{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.35)}
+.game-opt.correct{background:#22c55e;border-color:#4ade80;animation:pop 0.4s}
+.game-opt.wrong{background:#ef4444;border-color:#f87171;animation:shake 0.4s}
+.game-opt.disabled{opacity:0.4;pointer-events:none}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.game-fb{text-align:center;font-size:14px;font-weight:600;min-height:18px}
+.game-fb.ok{color:#4ade80}
+.game-fb.no{color:#fca5a5}
+.game-listen{align-self:center;padding:6px 14px;border-radius:20px;border:none;background:rgba(245,158,11,0.85);color:white;font-size:12px;cursor:pointer;display:none}
+.game-listen.show{display:inline-flex;align-items:center;gap:5px}
+</style>
+</head>
+<body>
+<div class="book">
+  <div class="header">
+    <span id="pageNum">1 / 1</span>
+    <button class="auto-btn" id="autoBtn" onclick="toggleAuto()">▶ 自动播放</button>
+  </div>
+  <div class="page-wrap" id="pageWrap"
+    ontouchstart="touchX=event.touches[0].clientX"
+    ontouchend="handleSwipe(event)">
+    <div class="page" id="pageEl"></div>
+    <button class="nav-btn nav-prev" id="prevBtn" onclick="go(-1)">‹</button>
+    <button class="nav-btn nav-next" id="nextBtn" onclick="go(1)">›</button>
+  </div>
+  <div class="controls">
+    <div class="audio-row">
+      <button class="audio-btn" id="zhBtn" onclick="speak('zh')">🔊 中文</button>
+      <button class="audio-btn all" id="allBtn" onclick="speakAll()">▶ 双语</button>
+      <button class="audio-btn" id="enBtn" onclick="speak('en')">🔊 English</button>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="hint">← → 翻页 | 空格 下一页 | 滑动翻页</div>
+  </div>
+</div>
+<script>
+const PAGES = ${pagesJSON};
+const META = ${metaJSON};
+let cur = 0, autoOn = false, autoTimer = null, playing = null, touchX = null;
+const T = PAGES.length;
+var curAudio = null;
+
+function render() {
+  const p = PAGES[cur];
+  const el = document.getElementById('pageEl');
+  el.innerHTML = (p.image ? '<img src="'+p.image+'">' : '') +
+    '<div class="text-bar">' +
+    p.zh.map(l=>'<div class="zh">'+l+'</div>').join('') +
+    p.en.map(l=>'<div class="en">'+l+'</div>').join('') +
+    '</div>';
+  if (p.game && (p.game.type==='choice' || p.game.type==='count') && p.game.options && p.game.options.length) {
+    el.innerHTML += renderGame(p.game);
+    bindGame(p.game);
+  }
+  document.getElementById('pageNum').textContent = (cur+1)+' / '+T;
+  document.getElementById('prevBtn').style.display = cur > 0 ? '' : 'none';
+  document.getElementById('nextBtn').style.display = cur < T-1 ? '' : 'none';
+  const dots = document.getElementById('dots');
+  dots.innerHTML = PAGES.map((_,i)=>'<button class="dot'+(i===cur?' active':'')+'" onclick="jump('+i+')"></button>').join('');
+}
+
+// ---------- Interactive game (embedded choice / count) ----------
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function renderGame(g){
+  var opts = g.options.map(function(o,i){
+    return '<button class="game-opt" data-i="'+i+'">'+esc(o.label_zh!=null?o.label_zh:o.label_en)+'</button>';
+  }).join('');
+  return '<div class="game" id="gameBox">'+
+    '<div class="game-q">'+esc(g.prompt_zh||'')+(g.prompt_en?'<span class="en">'+esc(g.prompt_en)+'</span>':'')+'</div>'+
+    '<div class="game-opts">'+opts+'</div>'+
+    '<div class="game-fb" id="gameFb"></div>'+
+    '<button class="game-listen" id="gameListen" onclick="speak(\\'zh\\')">🔊 听这个故事</button>'+
+    '</div>';
+}
+function bindGame(g){
+  var box = document.getElementById('gameBox');
+  if(!box) return;
+  var fb = document.getElementById('gameFb');
+  var listen = document.getElementById('gameListen');
+  var done = false;
+  box.querySelectorAll('.game-opt').forEach(function(btn){
+    btn.onclick = function(){
+      if(done) return;
+      var i = parseInt(btn.getAttribute('data-i'),10);
+      var o = g.options[i];
+      if(o.correct){
+        done = true;
+        btn.classList.add('correct');
+        box.querySelectorAll('.game-opt').forEach(function(b){if(b!==btn)b.classList.add('disabled');});
+        fb.className = 'game-fb ok';
+        fb.textContent = g._ok_zh || '✓ 答对了！';
+        if(listen) listen.classList.add('show');
+        playTone(true);
+      } else {
+        btn.classList.add('wrong');
+        setTimeout(function(){ btn.classList.remove('wrong'); }, 450);
+        fb.className = 'game-fb no';
+        fb.textContent = g._no_zh || '再试试～';
+        playTone(false);
+      }
+    };
+  });
+}
+// WebAudio feedback tones (no external assets)
+var _actx = null;
+function playTone(ok){
+  try{
+    _actx = _actx || new (window.AudioContext||window.webkitAudioContext)();
+    var now = _actx.currentTime;
+    var notes = ok ? [523.25, 659.25, 783.99, 1046.5] : [311.13, 261.63]; // C-E-G-C up / soft dip
+    notes.forEach(function(f, k){
+      var o = _actx.createOscillator(), g = _actx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      var t = now + k*0.12;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.18, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+      o.connect(g); g.connect(_actx.destination);
+      o.start(t); o.stop(t+0.24);
+    });
+  }catch(e){} // audio optional
+}
+
+function go(d) {
+  const n = cur + d;
+  if (n < 0 || n >= T) return;
+  stop();
+  const el = document.getElementById('pageEl');
+  el.classList.add('exit');
+  setTimeout(()=>{ cur=n; render(); el.classList.remove('exit'); el.classList.add('enter');
+    setTimeout(()=>el.classList.remove('enter'),50); }, 300);
+}
+function jump(i) { stop(); cur=i; render(); }
+function handleSwipe(e) { if(touchX!==null){const d=e.changedTouches[0].clientX-touchX;if(d<-50)go(1);else if(d>50)go(-1);touchX=null;} }
+
+function stop() { speechSynthesis.cancel(); if(curAudio){curAudio.pause(); curAudio=null;} playing=null; updateBtns(); }
+var voiceCache = [];
+function loadVoices() { voiceCache = speechSynthesis.getVoices(); return voiceCache; }
+function findVoice(lang) {
+  var v = voiceCache;
+  if (!v.length) v = loadVoices();
+  if (!v.length) return null;
+  var prefix = lang.split('-')[0];
+  return v.find(function(x){return x.lang===lang;})
+    || v.find(function(x){return x.lang.toLowerCase()===lang.toLowerCase();})
+    || v.find(function(x){return x.lang.startsWith(prefix+'-');})
+    || v.find(function(x){return x.lang.startsWith(prefix);})
+    || v.find(function(x){return x.lang.startsWith('en');})
+    || v[0];
+}
+function playEmbedded(key, onDone) {
+  if(curAudio){curAudio.pause(); curAudio=null;}
+  var a = new Audio(PAGES[cur][key]);
+  curAudio = a;
+  a.onended = function(){ curAudio=null; if(onDone) onDone(); };
+  a.onerror = function(){ curAudio=null; if(onDone) onDone(); };
+  a.play().catch(function(){ curAudio=null; if(onDone) onDone(); });
+  return true;
+}
+function doSpeak(text, langCode, rate, pitch, onDone) {
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = langCode; u.rate = rate || 0.85; u.pitch = pitch || 1.1;
+  var v = findVoice(langCode);
+  if (v) u.voice = v;
+  var finished = false;
+  var timer = null;
+  function done() { if(finished) return; finished=true; clearTimeout(timer); if(onDone) onDone(); }
+  u.onend = done;
+  u.onerror = done;
+  timer = setTimeout(done, Math.max(30000, text.length * 300));
+  speechSynthesis.speak(u);
+}
+function speak(lang) {
+  stop();
+  var p = PAGES[cur];
+  var isZh = (lang === 'zh');
+  var key = isZh ? 'audio_zh' : 'audio_en';
+  // Prefer the high-quality embedded MP3 if this page has one.
+  if (p[key]) {
+    playing = lang; updateBtns();
+    playEmbedded(key, function(){ playing=null; updateBtns(); });
+    return;
+  }
+  var text = isZh ? p.zh.join('\u3002') : p.en.join('. ');
+  var langCode = isZh ? 'zh-CN' : 'en-US';
+  if (!isZh && voiceCache.length && !voiceCache.find(function(v){return v.lang.startsWith('en');})) {
+    var voiceList = voiceCache.map(function(v){return v.name+' ('+v.lang+')';}).join('\\n');
+    alert('English voice not found!\\n\\nYour browser only has these voices:\\n' + voiceList
+      + '\\n\\nTo fix: Windows Settings > Time & Language > Language > Add "English (United States)"');
+    return;
+  }
+  playing = lang; updateBtns();
+  if (voiceCache.length === 0) {
+    loadVoices();
+    setTimeout(function(){ speak(lang); }, 200);
+    return;
+  }
+  doSpeak(text, langCode, 0.85, isZh ? 1.15 : 1.1, function(){ playing=null; updateBtns(); });
+}
+function speakAll() {
+  stop();
+  var p = PAGES[cur];
+  // Use embedded audio for whichever languages are available, speechSynthesis for the rest.
+  function playEn() {
+    playing = 'en'; updateBtns();
+    if (p.audio_en) { playEmbedded('audio_en', function(){ playing=null; updateBtns(); }); return; }
+    if (voiceCache.length === 0) { loadVoices(); setTimeout(playEn, 200); return; }
+    doSpeak(p.en.join('. '), 'en-US', 0.85, 1.1, function(){ playing=null; updateBtns(); });
+  }
+  playing = 'zh'; updateBtns();
+  if (p.audio_zh) { playEmbedded('audio_zh', playEn); return; }
+  if (voiceCache.length === 0) { loadVoices(); setTimeout(speakAll, 200); return; }
+  doSpeak(p.zh.join('\u3002'), 'zh-CN', 0.85, 1.15, playEn);
+}
+function updateBtns() {
+  document.getElementById('zhBtn').className='audio-btn'+(playing==='zh'?' playing':'');
+  document.getElementById('enBtn').className='audio-btn'+(playing==='en'?' playing':'');
+  document.getElementById('allBtn').className='audio-btn all'+(playing==='zh'||playing==='en'?' playing':'');
+  document.getElementById('zhBtn').innerHTML=playing==='zh'?'<span class="pulse"><span></span><span></span><span></span></span> 播放中':'🔊 中文';
+  document.getElementById('enBtn').innerHTML=playing==='en'?'<span class="pulse"><span></span><span></span><span></span></span> Playing':'🔊 English';
+}
+function toggleAuto() {
+  autoOn=!autoOn;
+  const btn=document.getElementById('autoBtn');
+  btn.textContent=autoOn?'⏸ 暂停':'▶ 自动播放';
+  btn.className='auto-btn'+(autoOn?' on':'');
+  if(autoOn){autoTimer=setInterval(()=>{if(cur<T-1)go(1);else{cur=0;render();}},10000);}
+  else{clearInterval(autoTimer);}
+}
+
+document.addEventListener('keydown',(e)=>{if(e.key==='ArrowRight'||e.key===' ')go(1);else if(e.key==='ArrowLeft')go(-1);});
+loadVoices();
+if(typeof speechSynthesis.onvoiceschanged!=='undefined'){speechSynthesis.onvoiceschanged=loadVoices;}
+document.addEventListener('click',function once(){loadVoices();document.removeEventListener('click',once);});
+var voicePoll=setInterval(function(){if(voiceCache.length||loadVoices().length)clearInterval(voicePoll);},500);
+setTimeout(function(){clearInterval(voicePoll);},10000);
+render();
+<\/script>
+</body>
+</html>`;
+}
+
+// ========== Utils ==========
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+</script>
+</body>
+</html>

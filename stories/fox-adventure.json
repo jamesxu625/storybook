@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title_zh": "小狐狸的七色冒险",
+    "title_en": "Little Fox's Rainbow Adventure",
+    "author": "AI Storyteller",
+    "style": "cute watercolor children's illustration, soft pastel colors, vertical 9:16 composition",
+    "aspect": "9:16"
+  },
+  "pages": [
+    {
+      "id": "cover",
+      "type": "cover",
+      "zh": ["小狐狸的七色冒险"],
+      "en": ["Little Fox's Rainbow Adventure"],
+      "image_file": "",
+      "prompt": "A cute orange fox sitting under a rainbow umbrella in a colorful autumn forest, surrounded by pink and orange flowers, butterflies, and magical sparkles"
+    },
+    {
+      "id": "p1",
+      "type": "story",
+      "zh": ["小狐狸在森林里捡到了一张藏宝图", "\u201c我要去冒险！\u201d他开心地说"],
+      "en": ["Little Fox found a treasure map in the forest", "\"I'm going on an adventure!\" he said happily"],
+      "image_file": "",
+      "prompt": "A cute orange fox discovering a rolled-up treasure map on a forest path, with tall colorful trees and scattered autumn leaves, curious expression"
+    },
+    {
+      "id": "p2",
+      "type": "story",
+      "zh": ["第一关：森林世界", "\u201c帮我找到三朵红色的花吧！\u201d"],
+      "en": ["Level 1: Forest World", "\"Help me find three red flowers!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox in a lush green forest with butterflies, three bright red flowers glowing among green foliage, birch trees with pink blossoms"
+    },
+    {
+      "id": "p3",
+      "type": "story",
+      "zh": ["第二关：河流世界", "\u201c踩着石头过河！一二三四五！\u201d"],
+      "en": ["Level 2: River World", "\"Cross the river on stepping stones!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox and a green frog standing on stepping stones in a river pond, lily pads with pink flowers, dragonflies, weeping willow tree, blue sky"
+    },
+    {
+      "id": "p4",
+      "type": "story",
+      "zh": ["第三关：天空世界", "\u201c在云朵上找到配对的图案！\u201d"],
+      "en": ["Level 3: Sky World", "\"Find matching patterns on the clouds!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox flying through pastel pink and blue clouds with a small yellow bird, glowing stars, soap bubbles, rainbow at the bottom, dreamy sky"
+    },
+    {
+      "id": "p5",
+      "type": "story",
+      "zh": ["第四关：高山世界", "\u201c数一数山上有几个蘑菇？\u201d"],
+      "en": ["Level 4: Mountain World", "\"Count the mushrooms on the mountain!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox standing on a green hilltop with colorful mushrooms of different sizes, rainbow arc in the sky, wildflowers, fluffy white clouds"
+    },
+    {
+      "id": "p6",
+      "type": "story",
+      "zh": ["第五关：洞穴世界", "\u201c找到四颗发光的水晶！\u201d"],
+      "en": ["Level 5: Cave World", "\"Find four glowing crystals!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox exploring a magical dark blue cave with glowing blue crystals, sparkles, mysterious rock formations, bioluminescent plants"
+    },
+    {
+      "id": "p7",
+      "type": "story",
+      "zh": ["第六关：冰雪世界", "\u201c有一片雪花很特别！你找到了吗？\u201d"],
+      "en": ["Level 6: Snow World", "\"One snowflake is special! Can you find it?\""],
+      "image_file": "",
+      "prompt": "A cute orange fox in a snowy winter wonderland, falling snowflakes of various shapes, one special golden snowflake, ice crystals, pine trees with snow"
+    },
+    {
+      "id": "p8",
+      "type": "story",
+      "zh": ["第七关：花园世界", "\u201c把花朵从小到大排好！\u201d"],
+      "en": ["Level 7: Flower World", "\"Sort the flowers from small to big!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox in a magical flower garden with flowers of various sizes from tiny to huge, colorful roses and daisies, butterflies, garden path"
+    },
+    {
+      "id": "p9",
+      "type": "story",
+      "zh": ["七颗星星全部点亮！", "天空出现了一道美丽的彩虹！"],
+      "en": ["All seven stars lit up!", "A beautiful rainbow appeared in the sky!"],
+      "image_file": "",
+      "prompt": "A cute orange fox looking up at a magnificent rainbow in the sky, seven glowing stars forming a constellation, magical golden light, celebration atmosphere"
+    },
+    {
+      "id": "p10",
+      "type": "ending",
+      "zh": ["冒险完成！", "\u201c我们是最好的朋友！\u201d"],
+      "en": ["Adventure complete!", "\"We are the best of friends!\""],
+      "image_file": "",
+      "prompt": "A cute orange fox celebrating with animal friends (frog, bird, butterfly) in a rainbow castle, confetti, balloons, happy expressions, warm golden light"
+    }
+  ]
+}
