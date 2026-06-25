@@ -14,6 +14,52 @@ This skill creates bilingual (Chinese + English) interactive picture books throu
 4. **Interactive Games** *(optional)* — Add per-page mini-games (choice / count) in the editor
 5. **User Assembly** — User uploads AI images in the editor and exports the final book
 
+## Recommended: Workbench (web UI, one-click start)
+
+The workbench is a browser-based workstation covering the full pipeline — from story generation to export — in five independent tabs, each cached at the JSON field level so you never redo finished steps. A local Flask backend handles GLM story generation, edge-tts dubbing, and HTML export.
+
+**Start it:**
+```
+double-click  skill/start.bat      (or: python skill/app.py)
+```
+This launches the server and opens `http://localhost:5000` automatically.
+
+**Five tabs (switch freely, order-independent):**
+- ✨ **生成故事** — enter theme / age / page count / style, one-click generate a full bilingual story JSON via ZhipuAI GLM (with per-page zh/en text + AI image prompts). Preview, name, and save to `stories/`. First use requires a GLM API key (click ⚙️ 设置, stored locally in `skill/.env`, gitignored).
+- 🖼 **配图** — per-page image upload (drag/select). Cached in `page.image`.
+- 🔊 **配音** — one-click zh+en generation via edge-tts (backend reuses `tts.py`, hash-cached so unchanged pages skip). Cached in `page.audio_zh` / `audio_en`.
+- 🎮 **配游戏** — per-page choice / count games. Cached in `page.game`.
+- 📦 **导出** — content toggles (include image / zh audio / en audio / game), then one-click export to `output/<title>.html`. Images are auto-compressed to 1080p JPEG at export (a 11MB 4K original → ~130KB), so the exported book is typically 2-5MB; the original JSON keeps the full-res images.
+
+**Saving:** auto-saves to JSON after every change (debounced), plus a manual 💾 save button.
+
+**Typical flow:** ✨ generate story → 🖼 add images → 🔊 dub → 🎮 add games → 📦 export. But any tab can be revisited independently thanks to field-level caching.
+
+Requires `pip install flask edge-tts zhipuai pillow` and `node` on PATH. The original JSON is backed up to `*.json.bak` on first save.
+
+## Quick Path: one-command build (`build.py`)
+
+Once you have a story JSON (Phase 1) and AI images for each page, skip the manual editor and assemble everything in the terminal:
+
+```
+python skill/build.py stories/your-story.json
+```
+
+This single command walks you through the whole book interactively:
+- **Per page**: paste an image path (drag the file in or type the path) or press Enter to skip; then optionally configure a game (choice / count) by answering prompts.
+- **Dubbing**: auto-generates zh + en MP3s via edge-tts (reuses `tts.py`, cached so reruns are fast).
+- **Export**: writes the final standalone HTML to `output/<title_en>.html`.
+
+Useful flags:
+- `--skip-tts` — keep existing audio, don't regenerate
+- `--no-games` — skip the game prompts
+- `--no-images` — skip the image prompts (e.g. just redub + re-export)
+- `--out path.html` — custom export path
+
+Requires `edge-tts` (for dubbing) and `node` on PATH (for HTML export — it extracts `generateBookHTML` from `editor.html` so there's a single source of truth for the exported book). The original JSON is backed up to `*.json.bak` on first modification.
+
+> The five-phase workflow below is the full manual path. `build.py` automates phases 2.5/2.6/3 into one interactive run; use it when you have images ready and want to skip opening the browser editor.
+
 ## Phase 1: Story Scripting
 
 When the user wants to create a picture book, gather these details first:
@@ -157,14 +203,24 @@ The exported HTML is:
 ├── stories/          # Story JSON files
 │   └── voices/       # tts.py MP3 cache (auto-created, safe to delete)
 ├── skill/
-│   ├── editor.html   # Editor template (single file)
-│   └── tts.py        # edge-tts voice-over generator (Phase 2.5)
+│   ├── editor.html   # Original editor (single file, also the export source)
+│   ├── tts.py        # edge-tts voice-over generator (reused by app.py/build.py)
+│   ├── build.py      # one-command terminal build (images+games+tts+export)
+│   ├── app.py        # Workbench backend (Flask: generate/story/tts/export APIs)
+│   ├── workbench.html# Workbench frontend (5 tabs: generate/image/dub/game/export)
+│   ├── start.bat     # one-click launcher (starts server + opens browser)
+│   └── .env          # GLM API key (gitignored, created via ⚙️ 设置)
 └── output/           # Exported books
 ```
 
 ## Pitfalls
 - Chinese fullwidth punctuation (U+FF01 etc.) must NOT appear in Python source code on Windows; use JSON files instead
+- **`build.py` and `app.py` both need `node` on PATH** — they export HTML by extracting `generateBookHTML` from `editor.html` via Node (single source of truth, no duplicated export logic). If `node` is missing, the dubbing/JSON steps still complete; only the final HTML export fails.
+- **The workbench (`app.py`) is the recommended path now** — `editor.html`, `build.py` are kept as alternatives. All three produce identical exported books because they share `generateBookHTML` as the single export source.
+- **Story generation needs a GLM API key** — get one at https://open.bigmodel.cn/usercenter/apikeys, then enter it via the workbench's ⚙️ 设置 button. It's stored locally in `skill/.env` (gitignored, never committed). Without a key, the ✨ 生成故事 tab can't generate; the other tabs (image/dub/game/export) work without it.
+- **`start.bat` must be ASCII-only** — Windows cmd reads .bat files as GBK by default; Chinese characters in the bat cause mojibake and command failures. Keep bat content in English.
 - Exported HTML can be large (20-40MB) if images are high-res; the editor handles this via base64 embedding
+- **Export auto-compresses images** — the workbench (`app.py`) resizes every page image to ≤1080x1920 and re-encodes as JPEG q85 via Pillow before exporting, so an 11MB 4K original becomes ~130KB. This is export-only; the saved JSON keeps full-res images. If Pillow is missing, export falls back to uncompressed (with a size warning). `build.py` does NOT compress — it embeds images as-is, so prefer the workbench for high-res sources.
 - Web Speech API voices vary by browser/OS; Chrome has the best Chinese voice support
 - For best results, AI images should be 1080x1920 (9:16 vertical)
 - **edge-tts needs internet** — it streams from `speech.platform.bing.com`. `tts.py` already works around a sandbox DNS quirk by forcing `aiohttp.ThreadedResolver`; if you still see "Could not contact DNS servers", check your network/proxy. The generated MP3s are then fully offline.

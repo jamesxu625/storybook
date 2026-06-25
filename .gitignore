@@ -15,6 +15,15 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+# Python bytecode cache
+__pycache__/
+*.pyc
+# API keys (zhipuai GLM) — never commit
+.env
+skill/.env
+# Exported books (large, generated) and stray HTML at root
+*.html.bak
+fox-adventure-*.html
 # Windows reserved device name artifacts (not real files)
 nul
 **/nul

@@ -401,7 +401,8 @@ function setGameType(type) {
     } else {
       p.game.type = type;
     }
-    // Count mode seeds 1..3 if empty; keep choice as-is.
+    // Both modes use free-form options; seed 1..3 only on first count creation
+    // so the user has something to edit, but they can change/delete freely.
     if (type === 'count' && (!p.game.options || !p.game.options.length)) {
       p.game.options = [1,2,3].map((n,i)=>({label_zh:String(n),label_en:String(n),correct:i===0}));
     }
@@ -418,23 +419,16 @@ function renderGameEditor() {
   box.innerHTML = `
     <div style="margin-bottom:12px;">
       <label style="font-size:12px;color:#666;">问题（中文）</label>
-      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_zh)}" oninput="updateGame('prompt_zh', this.value)" placeholder="例：哪个是红色的花？">
+      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_zh)}" oninput="updateGame('prompt_zh', this.value)" placeholder="${isCount?'例：有几个蘑菇？':'例：哪个是红色的花？'}">
     </div>
     <div style="margin-bottom:12px;">
       <label style="font-size:12px;color:#666;">Question (EN)</label>
-      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_en)}" oninput="updateGame('prompt_en', this.value)" placeholder="e.g. Which one is the red flower?">
+      <input class="text-line" style="padding:8px 12px;font-size:14px;" value="${escAttr(g.prompt_en)}" oninput="updateGame('prompt_en', this.value)" placeholder="${isCount?'e.g. How many mushrooms?':'e.g. Which is the red flower?'}">
     </div>
-    ${isCount ? `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <label style="font-size:12px;color:#666;">数字范围 1 →</label>
-        <input type="number" min="2" max="9" value="${g.options.length||3}" style="width:64px;padding:6px;border:1px solid #e5e5e5;border-radius:8px;" oninput="setCountRange(this.value)">
-        <span style="font-size:11px;color:#999;">（点选项标记正确答案）</span>
-      </div>
-    ` : ''}
-    <div style="font-size:12px;color:#999;margin-bottom:6px;">选项（点击左侧圆点标记正确答案，✓ 表示当前正确）</div>
+    <div style="font-size:12px;color:#999;margin-bottom:6px;">选项（点击左侧圆点标记正确答案，✓ 表示当前正确）${isCount?' — 数字选项可自由增删/修改':''}</div>
     <div id="gameOptions">${renderOptions()}</div>
-    ${!isCount ? `<button class="btn btn-secondary btn-small" onclick="addGameOption()" style="margin-top:8px;">+ 添加选项</button>` : ''}
-    <div style="margin-top:10px;font-size:11px;color:#999;">📱 在导出的绘本里，游戏会浮在页面中央；答对后会显示「🔊 听这个故事」按钮。</div>
+    <button class="btn btn-secondary btn-small" onclick="addGameOption()" style="margin-top:8px;">+ 添加选项</button>
+    <div style="margin-top:10px;font-size:11px;color:#999;">📱 在导出的绘本里，先看故事，点「🎮 开始游戏」后游戏出现在底部；答对后显示「🔊 听这个故事」按钮。</div>
   `;
 }
 
@@ -466,16 +460,6 @@ function removeOption(i) {
   const wasCorrect = opts[i].correct;
   opts.splice(i, 1);
   if (wasCorrect && opts.length) opts[0].correct = true;
-  renderGameEditor();
-}
-function setCountRange(n) {
-  n = Math.max(2, Math.min(9, parseInt(n, 10) || 3));
-  const g = curPage().game;
-  const correctVal = (g.options.find(o=>o.correct) || {}).label_zh || '1';
-  g.options = [];
-  for (let k = 1; k <= n; k++) {
-    g.options.push({ label_zh: String(k), label_en: String(k), correct: String(k) === correctVal });
-  }
   renderGameEditor();
 }
 
@@ -610,20 +594,22 @@ body{font-family:"Microsoft YaHei","Segoe UI",sans-serif;background:#111;color:w
 .pulse span:nth-child(2){animation-delay:0.15s}
 .pulse span:nth-child(3){animation-delay:0.3s}
 @keyframes pulse{from{height:4px}to{height:12px}}
-/* Interactive game */
-.game{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90%,440px);max-height:70%;background:rgba(15,15,30,0.92);border:1px solid rgba(255,255,255,0.15);border-radius:18px;padding:18px 16px;box-shadow:0 12px 40px rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px;z-index:6;animation:gameIn 0.3s}
-@keyframes gameIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}
-.game-q{font-size:18px;font-weight:600;text-align:center;line-height:1.4;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
-.game-q .en{display:block;font-size:12px;font-weight:400;opacity:0.7;margin-top:3px;text-shadow:none}
-.game-opts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.game-opt{min-width:64px;padding:14px 16px;border-radius:14px;border:2px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:white;font-size:22px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
-.game-opt:hover{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.35)}
+/* Interactive game — bottom panel, does NOT cover the image */
+.game-bar{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 16px;background:linear-gradient(transparent,rgba(10,10,25,0.96) 22%);z-index:6;display:flex;flex-direction:column;gap:10px;animation:gameIn 0.3s}
+@keyframes gameIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.game-start{align-self:center;padding:8px 20px;border-radius:24px;border:none;background:#f59e0b;color:white;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.4);z-index:6;position:absolute;bottom:78px;left:50%;transform:translateX(-50%);animation:gameIn 0.3s}
+.game-start:hover{background:#d97706}
+.game-q{font-size:16px;font-weight:600;text-align:center;line-height:1.4;text-shadow:0 1px 4px rgba(0,0,0,0.8)}
+.game-q .en{display:block;font-size:11px;font-weight:400;opacity:0.7;margin-top:2px;text-shadow:none}
+.game-opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.game-opt{min-width:56px;padding:11px 14px;border-radius:13px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:white;font-size:20px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.game-opt:hover{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.4)}
 .game-opt.correct{background:#22c55e;border-color:#4ade80;animation:pop 0.4s}
 .game-opt.wrong{background:#ef4444;border-color:#f87171;animation:shake 0.4s}
 .game-opt.disabled{opacity:0.4;pointer-events:none}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.game-fb{text-align:center;font-size:14px;font-weight:600;min-height:18px}
+.game-fb{text-align:center;font-size:13px;font-weight:600;min-height:16px}
 .game-fb.ok{color:#4ade80}
 .game-fb.no{color:#fca5a5}
 .game-listen{align-self:center;padding:6px 14px;border-radius:20px;border:none;background:rgba(245,158,11,0.85);color:white;font-size:12px;cursor:pointer;display:none}
@@ -669,8 +655,7 @@ function render() {
     p.en.map(l=>'<div class="en">'+l+'</div>').join('') +
     '</div>';
   if (p.game && (p.game.type==='choice' || p.game.type==='count') && p.game.options && p.game.options.length) {
-    el.innerHTML += renderGame(p.game);
-    bindGame(p.game);
+    el.innerHTML += '<button class="game-start" id="gameStart" onclick="startGame()">🎮 开始游戏</button>';
   }
   document.getElementById('pageNum').textContent = (cur+1)+' / '+T;
   document.getElementById('prevBtn').style.display = cur > 0 ? '' : 'none';
@@ -681,11 +666,21 @@ function render() {
 
 // ---------- Interactive game (embedded choice / count) ----------
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function startGame(){
+  var startBtn = document.getElementById('gameStart');
+  if(startBtn) startBtn.remove();
+  var p = PAGES[cur];
+  if(p.game){
+    var el = document.getElementById('pageEl');
+    el.insertAdjacentHTML('beforeend', renderGame(p.game));
+    bindGame(p.game);
+  }
+}
 function renderGame(g){
   var opts = g.options.map(function(o,i){
     return '<button class="game-opt" data-i="'+i+'">'+esc(o.label_zh!=null?o.label_zh:o.label_en)+'</button>';
   }).join('');
-  return '<div class="game" id="gameBox">'+
+  return '<div class="game-bar" id="gameBox">'+
     '<div class="game-q">'+esc(g.prompt_zh||'')+(g.prompt_en?'<span class="en">'+esc(g.prompt_en)+'</span>':'')+'</div>'+
     '<div class="game-opts">'+opts+'</div>'+
     '<div class="game-fb" id="gameFb"></div>'+

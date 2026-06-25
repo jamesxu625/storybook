@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>绘本工作台 | Picture Book Workbench</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f5f5f5; color: #333; height: 100vh; overflow: hidden; }
+
+  /* Layout */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+  .topbar { background: #1a1a2e; color: white; padding: 10px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar .spacer { flex: 1; }
+  .tabs { display: flex; gap: 4px; background: #fff; border-bottom: 2px solid #e5e5e5; padding: 0 20px; flex-shrink: 0; }
+  .tab { padding: 12px 22px; cursor: pointer; font-size: 14px; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #333; }
+  .tab.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+  .main { flex: 1; display: flex; overflow: hidden; }
+  .sidebar { width: 220px; background: #1a1a2e; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+  .page-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .page-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
+  .page-item:hover { background: rgba(255,255,255,0.08); }
+  .page-item.active { background: rgba(255,180,50,0.25); }
+  .page-thumb { width: 32px; height: 42px; border-radius: 4px; background: #333; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #666; }
+  .page-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .page-info { font-size: 12px; line-height: 1.3; flex: 1; min-width: 0; }
+  .page-info .num { opacity: 0.5; font-size: 10px; }
+  .page-info .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .page-info .status { font-size: 10px; margin-top: 2px; display: flex; gap: 4px; }
+  .dot-on { color: #4ade80; }
+  .dot-off { color: #555; }
+  .content { flex: 1; display: flex; overflow: hidden; }
+  .edit-area { flex: 1; overflow-y: auto; padding: 24px; }
+  .preview-panel { width: 300px; background: #111; display: flex; align-items: center; justify-content: center; padding: 20px; flex-shrink: 0; }
+
+  /* Controls */
+  select, input[type=text], input[type=number] { padding: 8px 12px; border: 1px solid #d4d4d4; border-radius: 8px; font-size: 14px; font-family: inherit; background: white; }
+  select:focus, input:focus { outline: none; border-color: #f59e0b; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: #f59e0b; color: white; }
+  .btn-primary:hover { background: #d97706; }
+  .btn-secondary { background: #e5e5e5; color: #333; }
+  .btn-secondary:hover { background: #d4d4d4; }
+  .btn-success { background: #22c55e; color: white; }
+  .btn-success:hover { background: #16a34a; }
+  .btn-danger { background: #ef4444; color: white; font-size: 12px; padding: 4px 10px; }
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Sections */
+  .section { background: white; border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 12px; font-weight: 600; }
+  .lang-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .lang-zh { background: #fef3c7; color: #92400e; }
+  .lang-en { background: #dbeafe; color: #1e40af; }
+
+  /* Upload zone */
+  .upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+  .upload-zone:hover { border-color: #f59e0b; background: #fffbeb; }
+  .upload-zone.has-image { border-style: solid; border-color: #22c55e; padding: 10px; }
+  .upload-zone img { max-width: 100%; max-height: 180px; border-radius: 8px; }
+  .upload-zone .placeholder { color: #999; }
+  .upload-zone .placeholder .icon { font-size: 32px; margin-bottom: 6px; }
+
+  /* TTS */
+  .tts-progress { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px; margin-bottom: 12px; display: none; }
+  .tts-progress.show { display: block; }
+  .tts-progress .bar { height: 8px; background: #e0f2fe; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .tts-progress .bar-fill { height: 100%; background: #0ea5e9; transition: width 0.3s; width: 0%; }
+
+  /* Export toggles */
+  .toggle { display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; }
+  .toggle input { width: 18px; height: 18px; cursor: pointer; }
+  .toggle label { font-size: 14px; cursor: pointer; }
+
+  /* Preview */
+  .phone-frame { width: 260px; height: 460px; background: #000; border-radius: 22px; overflow: hidden; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  .phone-screen { width: 100%; height: 100%; }
+  .phone-screen img { width: 100%; height: 100%; object-fit: cover; }
+  .phone-text-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; background: linear-gradient(transparent, rgba(0,0,0,0.85)); color: white; }
+  .phone-text-overlay .zh-text { font-size: 13px; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+  .phone-text-overlay .en-text { font-size: 10px; opacity: 0.8; }
+  .phone-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #555; font-size: 13px; flex-direction: column; gap: 8px; }
+
+  /* Game editor (phase 2) */
+  .game-opt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .game-opt-row input { flex: 1; }
+  .correct-dot { cursor: pointer; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; background: #e5e5e5; color: white; flex-shrink: 0; }
+  .correct-dot.on { background: #22c55e; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; z-index: 9999; animation: fadeInUp 0.3s; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  .hidden { display: none !important; }
+  .save-indicator { font-size: 12px; opacity: 0.6; }
+  .save-indicator.saving { color: #fbbf24; opacity: 1; }
+  .save-indicator.saved { color: #4ade80; opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Top bar -->
+  <div class="topbar">
+    <h1>📚 绘本工作台</h1>
+    <select id="storySelect" onchange="loadStory(this.value)">
+      <option value="">— 选择故事 —</option>
+    </select>
+    <span class="save-indicator" id="saveIndicator"></span>
+    <div class="spacer"></div>
+    <button class="btn btn-secondary" onclick="openSettings()">⚙️ 设置</button>
+    <button class="btn btn-secondary" onclick="saveStory(true)">💾 保存</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="generate" onclick="switchTab('generate')">✨ 生成故事</div>
+    <div class="tab" data-tab="image" onclick="switchTab('image')">🖼 配图</div>
+    <div class="tab" data-tab="tts" onclick="switchTab('tts')">🔊 配音</div>
+    <div class="tab" data-tab="game" onclick="switchTab('game')">🎮 配游戏</div>
+    <div class="tab" data-tab="export" onclick="switchTab('export')">📦 导出</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="page-list" id="pageList"></div>
+    </div>
+    <!-- Edit area + preview -->
+    <div class="content">
+      <div class="edit-area" id="editArea"></div>
+      <div class="preview-panel">
+        <div class="phone-frame"><div class="phone-screen" id="phoneScreen"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay hidden" id="settingsModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;">
+  <div style="background:white;border-radius:16px;padding:24px;max-width:440px;width:90%;">
+    <h3 style="margin-bottom:16px;">⚙️ 设置 — GLM API Key</h3>
+    <p style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;">填入智谱 GLM API key 用于生成故事脚本。key 存在本地 skill/.env 文件，不会上传。获取：<a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" style="color:#f59e0b;">open.bigmodel.cn</a></p>
+    <input type="text" id="apiKeyInput" placeholder="ZHIPU_API_KEY" style="width:100%;margin-bottom:12px;">
+    <div id="keyStatus" style="font-size:13px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeSettings()">取消</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">保存 Key</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="imgInput" accept="image/*" class="hidden">
+
+<script>
+// ========== State ==========
+let story = null;
+let storyName = '';
+let currentPage = 0;
+let currentTab = 'image';
+let saveTimer = null;
+
+// ========== Init ==========
+const imgInput = document.getElementById('imgInput');
+imgInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleImageUpload(e.target.files[0]);
+});
+
+loadStoryList();
+
+async function loadStoryList() {
+  const r = await fetch('/api/stories');
+  const names = await r.json();
+  const sel = document.getElementById('storySelect');
+  sel.innerHTML = '<option value="">— 选择故事 —</option>' +
+    names.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+async function loadStory(name) {
+  if (!name) return;
+  const r = await fetch('/api/story?name=' + encodeURIComponent(name));
+  story = await r.json();
+  storyName = name;
+  currentPage = 0;
+  renderPageList();
+  renderTab();
+}
+
+// ========== Save (auto + manual) ==========
+function autoSave() {
+  clearTimeout(saveTimer);
+  document.getElementById('saveIndicator').className = 'save-indicator saving';
+  document.getElementById('saveIndicator').textContent = '保存中…';
+  saveTimer = setTimeout(() => saveStory(false), 1000);
+}
+
+async function saveStory(showToast) {
+  if (!story) return;
+  document.getElementById('saveIndicator').className = 'save-indicator saving';
+  document.getElementById('saveIndicator').textContent = '保存中…';
+  const r = await fetch('/api/story', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: storyName, story: story})
+  });
+  const ok = r.ok;
+  const ind = document.getElementById('saveIndicator');
+  ind.className = 'save-indicator ' + (ok ? 'saved' : 'saving');
+  ind.textContent = ok ? '✓ 已保存' : '✗ 保存失败';
+  if (showToast) toast(ok ? '已保存' : '保存失败');
+  setTimeout(() => { ind.textContent = ''; }, 2000);
+}
+
+// ========== Page list ==========
+function renderPageList() {
+  if (!story) return;
+  const list = document.getElementById('pageList');
+  list.innerHTML = story.pages.map((p, i) => {
+    const hasImg = !!p.image;
+    const hasZh = !!p.audio_zh;
+    const hasEn = !!p.audio_en;
+    const hasGame = !!p.game;
+    const title = (p.zh && p.zh[0]) || p.id;
+    return `<div class="page-item ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
+      <div class="page-thumb">${hasImg ? `<img src="${p.image}">` : (i+1)}</div>
+      <div class="page-info">
+        <div class="num">${p.type === 'cover' ? '封面' : p.type === 'ending' ? '结尾' : '第'+i+'页'}</div>
+        <div class="title">${title}</div>
+        <div class="status">
+          <span class="${hasImg?'dot-on':'dot-off'}">🖼</span>
+          <span class="${hasZh?'dot-on':'dot-off'}">中</span>
+          <span class="${hasEn?'dot-on':'dot-off'}">EN</span>
+          <span class="${hasGame?'dot-on':'dot-off'}">🎮</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goToPage(i) { currentPage = i; renderPageList(); renderTab(); }
+
+// ========== Tab switching ==========
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  renderTab();
+}
+
+function renderTab() {
+  if (currentTab === 'generate') { renderGenerateTab(); renderPreview(); return; }
+  if (!story) { document.getElementById('editArea').innerHTML = '<div style="color:#999;text-align:center;padding:40px;">请先在「✨ 生成故事」Tab 创建故事，或从顶部选择已有故事</div>'; renderPreview(); return; }
+  if (currentTab === 'image') renderImageTab();
+  else if (currentTab === 'tts') renderTtsTab();
+  else if (currentTab === 'game') renderGameTab();
+  else if (currentTab === 'export') renderExportTab();
+  renderPreview();
+}
+
+// ========== Generate Story Tab ==========
+function renderGenerateTab() {
+  document.getElementById('editArea').innerHTML = `
+    <div class="section">
+      <div class="section-title">✨ 生成故事脚本</div>
+      <p style="font-size:13px;color:#666;margin-bottom:14px;line-height:1.6;">输入关键词和描述，用智谱 GLM 生成完整的中英双语故事脚本（含分页文本和 AI 配图提示词）。生成后可保存为新的故事文件。</p>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#666;">主题 / 关键词 *</label>
+        <input type="text" id="genTheme" style="width:100%;margin-top:4px;" placeholder="例：小恐龙在森林里寻宝，遇到各种动物朋友" value="${escAttr(window._genTheme||'')}">
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:#666;">目标年龄</label>
+          <input type="text" id="genAge" style="width:100%;margin-top:4px;" value="${escAttr(window._genAge||'3-6')}">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;color:#666;">页数</label>
+          <input type="number" id="genPages" style="width:100%;margin-top:4px;" value="${window._genPages||10}" min="4" max="20">
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;color:#666;">视觉风格（用于 AI 配图提示词）</label>
+        <input type="text" id="genStyle" style="width:100%;margin-top:4px;" value="${escAttr(window._genStyle||'cute watercolor children\'s illustration, soft pastel colors, vertical 9:16 composition')}">
+      </div>
+      <button class="btn btn-primary" onclick="generateStory()" id="genBtn">✨ 生成故事</button>
+      <div id="genProgress" style="margin-top:14px;display:none;font-size:13px;color:#666;"></div>
+    </div>
+    <div class="section" id="genResult" style="display:none;">
+      <div class="section-title">生成结果预览</div>
+      <div id="genPreview"></div>
+      <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+        <input type="text" id="genFilename" placeholder="文件名 (如 my-story.json)" style="flex:1;">
+        <button class="btn btn-success" onclick="saveGenerated()">💾 保存为故事</button>
+      </div>
+    </div>`;
+}
+
+async function generateStory() {
+  const theme = document.getElementById('genTheme').value.trim();
+  const age = document.getElementById('genAge').value.trim();
+  const pages = document.getElementById('genPages').value;
+  const style = document.getElementById('genStyle').value.trim();
+  if (!theme) { toast('请输入主题'); return; }
+  // Remember inputs for reruns.
+  window._genTheme = theme; window._genAge = age;
+  window._genPages = pages; window._genStyle = style;
+
+  const btn = document.getElementById('genBtn');
+  const prog = document.getElementById('genProgress');
+  btn.disabled = true; btn.textContent = '生成中…';
+  prog.style.display = 'block';
+  prog.textContent = '正在调用 GLM 生成故事，请稍候（约 10-20 秒）…';
+
+  try {
+    const r = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({theme, age, pages: parseInt(pages), style})
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      if (data.error === 'no_api_key') { prog.textContent = '请先点右上角「⚙️ 设置」填入 GLM API key'; return; }
+      throw new Error(data.error || 'failed');
+    }
+    window._generated = data;
+    prog.textContent = '✓ 生成完成！';
+    // Show preview.
+    const result = document.getElementById('genResult');
+    const preview = document.getElementById('genPreview');
+    result.style.display = 'block';
+    preview.innerHTML = `
+      <div style="margin-bottom:8px;"><b>${escAttr(data.meta.title_zh)}</b> / ${escAttr(data.meta.title_en)}</div>
+      <div style="font-size:12px;color:#999;margin-bottom:8px;">${data.pages.length} 页</div>
+      <div style="max-height:300px;overflow-y:auto;border:1px solid #e5e5e5;border-radius:8px;padding:10px;">
+        ${data.pages.map((p,i)=>`<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">
+          <div style="font-size:11px;color:#999;">${p.type||'story'} (${p.id})</div>
+          <div style="font-size:13px;">🇨🇳 ${(p.zh||[]).join(' / ')}</div>
+          <div style="font-size:12px;color:#666;">🇬🇧 ${(p.en||[]).join(' / ')}</div>
+        </div>`).join('')}
+      </div>`;
+    // Default filename from title_en.
+    const fn = (data.meta.title_en || 'new-story').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+    document.getElementById('genFilename').value = fn + '.json';
+  } catch (e) {
+    prog.textContent = '✗ 失败：' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ 生成故事';
+  }
+}
+
+async function saveGenerated() {
+  if (!window._generated) return;
+  let name = document.getElementById('genFilename').value.trim();
+  if (!name) { toast('请输入文件名'); return; }
+  if (!name.endsWith('.json')) name += '.json';
+  const r = await fetch('/api/story', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, story: window._generated})
+  });
+  if (r.ok) {
+    toast('已保存：' + name);
+    // Load it into the workbench.
+    story = window._generated;
+    storyName = name;
+    currentPage = 0;
+    document.getElementById('storySelect').value = name;
+    // Add to dropdown if not present.
+    const sel = document.getElementById('storySelect');
+    if (![...sel.options].some(o => o.value === name)) {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    }
+    sel.value = name;
+    renderPageList();
+    switchTab('image');
+  } else {
+    toast('保存失败');
+  }
+}
+
+// ========== Settings (API key) ==========
+async function openSettings() {
+  document.getElementById('settingsModal').classList.remove('hidden');
+  const r = await fetch('/api/config');
+  const cfg = await r.json();
+  document.getElementById('keyStatus').textContent = cfg.has_key ? '✓ 已配置 API key' : '○ 未配置';
+  document.getElementById('keyStatus').style.color = cfg.has_key ? '#22c55e' : '#999';
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiKeyInput').placeholder = cfg.has_key ? '已配置，输入新 key 覆盖' : '粘贴你的 GLM API key';
+}
+function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+async function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { toast('请输入 key'); return; }
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({key})
+  });
+  if (r.ok) { toast('API key 已保存'); closeSettings(); }
+  else toast('保存失败');
+}
+
+// ========== Image Tab ==========
+function renderImageTab() {
+  const p = story.pages[currentPage];
+  const hasImg = !!p.image;
+  document.getElementById('editArea').innerHTML = `
+    <div class="section">
+      <div class="section-title">🖼 配图 — ${p.type === 'cover' ? '封面' : p.type === 'ending' ? '结尾' : '第'+currentPage+'页'} (${p.id})</div>
+      <div class="upload-zone ${hasImg ? 'has-image' : ''}" onclick="imgInput.click()">
+        ${hasImg
+          ? `<img src="${p.image}"><div style="margin-top:8px;font-size:12px;color:#22c55e;">点击更换图片</div>`
+          : `<div class="placeholder"><div class="icon">📷</div><div>点击上传 AI 生成的图片</div><div style="font-size:12px;margin-top:4px;">推荐 1080x1920 竖版</div></div>`}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">页面文本</div>
+      <div style="margin-bottom:8px;"><span class="lang-badge lang-zh">中文</span> ${(p.zh||[]).join(' / ')}</div>
+      <div><span class="lang-badge lang-en">EN</span> ${(p.en||[]).join(' / ')}</div>
+    </div>`;
+}
+
+function handleImageUpload(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    story.pages[currentPage].image = e.target.result;
+    renderTab(); renderPageList(); autoSave();
+    toast('图片已上传');
+  };
+  reader.readAsDataURL(file);
+  imgInput.value = '';
+}
+
+// ========== TTS Tab ==========
+function renderTtsTab() {
+  const pages = story.pages;
+  const zhCount = pages.filter(p => p.audio_zh).length;
+  const enCount = pages.filter(p => p.audio_en).length;
+  const p = pages[currentPage];
+  document.getElementById('editArea').innerHTML = `
+    <div class="section">
+      <div class="section-title">🔊 配音生成</div>
+      <div class="tts-progress" id="ttsProgress">
+        <div id="ttsStatus">正在生成配音…</div>
+        <div class="bar"><div class="bar-fill" id="ttsBar"></div></div>
+      </div>
+      <p style="font-size:13px;color:#666;margin-bottom:12px;">使用 edge-tts 微软神经语音生成中英文配音。文本没变的页会自动跳过（哈希缓存）。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-primary" onclick="generateTTS(['zh','en'])">🔊 生成中英双语</button>
+        <button class="btn btn-secondary" onclick="generateTTS(['zh'])">仅中文</button>
+        <button class="btn btn-secondary" onclick="generateTTS(['en'])">仅英文</button>
+        <button class="btn btn-secondary" onclick="generateTTS(['zh','en'],true)">🔄 强制重新生成</button>
+      </div>
+      <div style="font-size:13px;">
+        总进度：中文 <b>${zhCount}/${pages.length}</b> · 英文 <b>${enCount}/${pages.length}</b>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">当前页配音 (${p.id})</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:13px;margin-bottom:6px;color:${p.audio_zh?'#22c55e':'#999'};">${p.audio_zh?'✓ 中文已生成':'○ 中文未生成'}</div>
+          ${p.audio_zh ? `<button class="btn btn-secondary btn-small" onclick="previewAudio('audio_zh')">▶ 试听</button>` : ''}
+        </div>
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:13px;margin-bottom:6px;color:${p.audio_en?'#22c55e':'#999'};">${p.audio_en?'✓ English ready':'○ English not generated'}</div>
+          ${p.audio_en ? `<button class="btn btn-secondary btn-small" onclick="previewAudio('audio_en')">▶ Preview</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function generateTTS(langs, force) {
+  const prog = document.getElementById('ttsProgress');
+  const status = document.getElementById('ttsStatus');
+  const bar = document.getElementById('ttsBar');
+  prog.classList.add('show');
+  status.textContent = '正在生成配音，请稍候…（每页约 2-3 秒）';
+  bar.style.width = '30%';
+  try {
+    const r = await fetch('/api/tts', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: storyName, lang: langs, force: !!force})
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'failed'); }
+    bar.style.width = '100%';
+    status.textContent = '✓ 配音生成完成！';
+    story = await r.json();
+    renderPageList(); renderTab();
+    toast('配音已生成');
+    setTimeout(() => prog.classList.remove('show'), 2000);
+  } catch (e) {
+    status.textContent = '✗ 失败：' + e.message;
+    toast('配音失败: ' + e.message);
+  }
+}
+
+let previewAudioEl = null;
+function previewAudio(field) {
+  const src = story.pages[currentPage][field];
+  if (!src) return;
+  if (previewAudioEl) { previewAudioEl.pause(); previewAudioEl = null; }
+  previewAudioEl = new Audio(src);
+  previewAudioEl.play().catch(() => toast('播放失败'));
+}
+
+// ========== Game Tab (Phase 2 placeholder) ==========
+function renderGameTab() {
+  const p = story.pages[currentPage];
+  const g = p.game;
+  const type = g ? g.type : 'none';
+  document.getElementById('editArea').innerHTML = `
+    <div class="section">
+      <div class="section-title">🎮 互动游戏 — ${p.id}</div>
+      <div style="margin-bottom:12px;">
+        <select id="gameTypeSel" onchange="setGameType(this.value)">
+          <option value="none" ${type==='none'?'selected':''}>无互动</option>
+          <option value="choice" ${type==='choice'?'selected':''}>点选答题</option>
+          <option value="count" ${type==='count'?'selected':''}>数一数 / 计数</option>
+        </select>
+      </div>
+      <div id="gameEditor"></div>
+    </div>`;
+  renderGameEditor();
+}
+
+function setGameType(t) {
+  const p = story.pages[currentPage];
+  if (t === 'none') { delete p.game; }
+  else {
+    if (!p.game) p.game = {type: t, prompt_zh: '', prompt_en: '', options: []};
+    else p.game.type = t;
+    if (t === 'count' && (!p.game.options || !p.game.options.length))
+      p.game.options = [1,2,3].map((n,i)=>({label_zh:String(n),label_en:String(n),correct:i===0}));
+  }
+  renderGameEditor(); renderPageList(); autoSave();
+}
+
+function renderGameEditor() {
+  const g = story.pages[currentPage].game;
+  const box = document.getElementById('gameEditor');
+  if (!g || (g.type !== 'choice' && g.type !== 'count')) { box.innerHTML = ''; return; }
+  const isCount = g.type === 'count';
+  box.innerHTML = `
+    <div style="margin-bottom:10px;"><label style="font-size:12px;color:#666;">问题(中文)</label>
+      <input type="text" style="width:100%;margin-top:4px;" value="${escAttr(g.prompt_zh)}" oninput="story.pages[currentPage].game.prompt_zh=this.value;autoSave()" placeholder="${isCount?'例：有几个蘑菇？':'例：哪个是红色的花？'}"></div>
+    <div style="margin-bottom:10px;"><label style="font-size:12px;color:#666;">Question(EN)</label>
+      <input type="text" style="width:100%;margin-top:4px;" value="${escAttr(g.prompt_en)}" oninput="story.pages[currentPage].game.prompt_en=this.value;autoSave()" placeholder="${isCount?'How many?':'Which is red?'}"></div>
+    <div style="font-size:12px;color:#999;margin-bottom:6px;">选项（点左侧圆点=正确答案）</div>
+    ${(g.options||[]).map((o,i)=>`
+      <div class="game-opt-row">
+        <span class="correct-dot ${o.correct?'on':''}" onclick="markCorrect(${i})">${o.correct?'✓':''}</span>
+        <input type="text" value="${escAttr(o.label_zh)}" oninput="story.pages[currentPage].game.options[${i}].label_zh=this.value;autoSave()" placeholder="中文/emoji">
+        ${!isCount?`<input type="text" value="${escAttr(o.label_en)}" oninput="story.pages[currentPage].game.options[${i}].label_en=this.value;autoSave()" placeholder="EN">`:''}
+        <button class="btn btn-danger" onclick="removeGameOpt(${i})">✕</button>
+      </div>`).join('')}
+    <button class="btn btn-secondary btn-small" onclick="addGameOpt()" style="margin-top:8px;">+ 添加选项</button>`;
+}
+
+function markCorrect(i) {
+  const opts = story.pages[currentPage].game.options;
+  opts.forEach((o,k)=>o.correct=(k===i));
+  renderGameEditor(); renderPageList(); autoSave();
+}
+function addGameOpt() {
+  story.pages[currentPage].game.options.push({label_zh:'',label_en:'',correct:false});
+  renderGameEditor(); autoSave();
+}
+function removeGameOpt(i) {
+  const opts = story.pages[currentPage].game.options;
+  const was = opts[i].correct;
+  opts.splice(i,1);
+  if (was && opts.length) opts[0].correct = true;
+  renderGameEditor(); renderPageList(); autoSave();
+}
+function escAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+// ========== Export Tab ==========
+function renderExportTab() {
+  const pages = story.pages;
+  const zhCount = pages.filter(p=>p.audio_zh).length;
+  const enCount = pages.filter(p=>p.audio_en).length;
+  const imgCount = pages.filter(p=>p.image).length;
+  const gameCount = pages.filter(p=>p.game).length;
+  document.getElementById('editArea').innerHTML = `
+    <div class="section">
+      <div class="section-title">📦 导出绘本</div>
+      <p style="font-size:13px;color:#666;margin-bottom:14px;">导出独立的 HTML 文件，含图片+配音+游戏，离线可用。导出文件在 output/ 目录。</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#15803d;line-height:1.6;">
+        ✅ 导出时自动压缩图片为 1080p JPEG（4K 原图 11MB → 约 130KB），整本书通常 2-5MB，不影响观看质量。原 JSON 保留高清原图。
+      </div>
+      <div style="background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:13px;margin-bottom:8px;">当前内容状态：</div>
+        <div style="font-size:13px;line-height:1.8;">
+          🖼 图片：${imgCount}/${pages.length} · 🔊 中文：${zhCount}/${pages.length} · EN：${enCount}/${pages.length} · 🎮 游戏：${gameCount}/${pages.length}
+        </div>
+      </div>
+      <div style="font-size:13px;margin-bottom:6px;font-weight:600;">导出内容开关：</div>
+      <div class="toggle"><input type="checkbox" id="tgl-image" checked><label for="tgl-image">包含图片</label></div>
+      <div class="toggle"><input type="checkbox" id="tgl-zh" checked><label for="tgl-zh">包含中文配音</label></div>
+      <div class="toggle"><input type="checkbox" id="tgl-en" checked><label for="tgl-en">包含英文配音</label></div>
+      <div class="toggle"><input type="checkbox" id="tgl-game" checked><label for="tgl-game">包含互动游戏</label></div>
+      <button class="btn btn-success" onclick="doExport()" style="margin-top:14px;">📦 导出绘本 HTML</button>
+    </div>`;
+}
+
+async function doExport() {
+  const flags = [];
+  if (!document.getElementById('tgl-image').checked) flags.push('no-image');
+  if (!document.getElementById('tgl-zh').checked) flags.push('no-audio-zh');
+  if (!document.getElementById('tgl-en').checked) flags.push('no-audio-en');
+  if (!document.getElementById('tgl-game').checked) flags.push('no-game');
+  toast('正在导出…');
+  try {
+    const r = await fetch('/api/export', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: storyName, flags: flags})
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'failed'); }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cd = r.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename="?([^"]+)"?/i);
+    a.download = m ? m[1] : 'book.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('导出成功！');
+  } catch (e) {
+    toast('导出失败: ' + e.message);
+  }
+}
+
+// ========== Preview ==========
+function renderPreview() {
+  if (!story) return;
+  const p = story.pages[currentPage];
+  const hasImg = !!p.image;
+  document.getElementById('phoneScreen').innerHTML = `
+    ${hasImg ? `<img src="${p.image}">` : `<div class="phone-empty"><div style="font-size:32px">📷</div><div>暂无图片</div></div>`}
+    <div class="phone-text-overlay">
+      ${(p.zh||[]).map(l=>`<div class="zh-text">${l}</div>`).join('')}
+      ${(p.en||[]).map(l=>`<div class="en-text">${l}</div>`).join('')}
+    </div>`;
+}
+
+// ========== Utils ==========
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+</script>
+</body>
+</html>
