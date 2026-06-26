@@ -265,12 +265,16 @@ function startMic(){
   recog.onresult=function(e){
     var text='';
     for(var i=e.resultIndex;i<e.results.length;i++) text+=e.results[i][0].transcript;
-    text=text.trim().slice(0,6); // max 6 chars
+    // Clean up: strip common filler words a child might say ("我想叫它"/"叫"/"它叫")
+    text=text.trim().replace(/^(我想|我要|就|它|他|她|叫|叫它|叫它叫|它的名字叫|名字叫)/g,'').trim();
+    text=text.slice(0,8); // allow up to 8 chars
     document.getElementById('nameResult').textContent=text;
-    if(e.results[e.results.length-1].isFinal){
+    if(e.results[e.results.length-1].isFinal && text){
       charName=text;
       document.getElementById('startBtn').style.display='inline-flex';
       document.getElementById('micHint').textContent='就叫 '+text+' 啦！';
+      var nr=document.getElementById('nameResult');
+      nr.style.animation='pop 0.5s'; setTimeout(function(){nr.style.animation='';},500);
       // Speak back so the child confirms by hearing, not reading
       speakText('就叫'+text+'啦！你好，'+text+'！','zh-CN');
     }
