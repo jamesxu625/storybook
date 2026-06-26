@@ -106,7 +106,7 @@
     <p class="hint" style="margin-bottom:24px;">点一个你喜欢的！</p>
     <div class="card-grid">
       <div class="card" onclick="chooseTheme('dino','🦕','小恐龙去冒险')"><div class="emoji">🦕</div><div class="label">小恐龙去冒险</div></div>
-      <div class="card" onclick="chooseTheme('car','🚗','小汽车旅行记')"><div class="emoji">🚗</div><div class="label">小汽车旅行记</div></div>
+      <div class="card" onclick="chooseTheme('car','🏎️','赛车总动员')"><div class="emoji">🏎️</div><div class="label">赛车总动员</div></div>
       <div class="card" onclick="chooseTheme('castle','🏰','公主与城堡')"><div class="emoji">🏰</div><div class="label">公主与城堡</div></div>
       <div class="card" onclick="chooseTheme('ocean','🐠','海底好朋友')"><div class="emoji">🐠</div><div class="label">海底好朋友</div></div>
     </div>
@@ -118,11 +118,7 @@
   <div class="topbar"><div class="title" id="s2title">🦕 小恐龙去冒险</div></div>
   <div class="body">
     <h2 style="font-size:22px;margin-bottom:6px;">选一个好朋友！</h2>
-    <div class="card-grid" style="margin-top:20px;">
-      <div class="char-card" onclick="chooseChar('green','🦖','绿色恐龙',this)"><div class="emoji">🦖</div><div class="name">绿色恐龙</div></div>
-      <div class="char-card" onclick="chooseChar('pink','🦕','粉色恐龙',this)"><div class="emoji">🦕</div><div class="name">粉色恐龙</div></div>
-      <div class="char-card" onclick="chooseChar('blue','🦎','蓝色恐龙',this)"><div class="emoji">🦎</div><div class="name">蓝色恐龙</div></div>
-    </div>
+    <div class="card-grid" id="charGrid" style="margin-top:20px;"></div>
     <div id="nameSection" style="display:none;margin-top:24px;text-align:center;">
       <p style="font-size:16px;margin-bottom:14px;">给它取个名字吧！</p>
       <div id="nameResult" style="font-size:28px;font-weight:700;color:#f59e0b;min-height:40px;margin-bottom:14px;"></div>
@@ -222,18 +218,60 @@ let storyLine={place:'',friend:'',activity:''};
 let slStep=0;
 let storyPages=[];
 
-// Story line options
-const SL_QUESTIONS=[
-  {q:'去哪里？',opts:[{e:'🌲',l:'森林'},{e:'🏞️',l:'河边'},{e:'🏔️',l:'山洞'}]},
-  {q:'去找谁？',opts:[{e:'🐰',l:'小兔子'},{e:'🐢',l:'小乌龟'},{e:'🐦',l:'小乌鸦'}]},
-  {q:'去干什么？',opts:[{e:'🍎',l:'摘苹果'},{e:'🙈',l:'捉迷藏'},{e:'🌅',l:'看日落'}]}
-];
+// Theme configs: each theme has its own characters, story-line options, and lineart
+const THEMES={
+  dino:{
+    chars:[{c:'green',e:'🦖',n:'绿色恐龙'},{c:'pink',e:'🦕',n:'粉色恐龙'},{c:'blue',e:'🦎',n:'蓝色恐龙'}],
+    sl:[
+      {q:'去哪里？',opts:[{e:'🌲',l:'森林'},{e:'🏞️',l:'河边'},{e:'🏔️',l:'山洞'}]},
+      {q:'去找谁？',opts:[{e:'🐰',l:'小兔子'},{e:'🐢',l:'小乌龟'},{e:'🐦',l:'小乌鸦'}]},
+      {q:'去干什么？',opts:[{e:'🍎',l:'摘苹果'},{e:'🙈',l:'捉迷藏'},{e:'🌅',l:'看日落'}]}
+    ],
+    emoji:'🦕'
+  },
+  car:{
+    chars:[{c:'red',e:'🏎️',n:'红色赛车'},{c:'blue',e:'🚙',n:'蓝色赛车'},{c:'yellow',e:'🚗',n:'黄色赛车'}],
+    sl:[
+      {q:'开去哪里？',opts:[{e:'🏙️',l:'城市'},{e:'🏜️',l:'沙漠'},{e:'🏔️',l:'雪山'}]},
+      {q:'遇到谁？',opts:[{e:'🚛',l:'大卡车'},{e:'🚓',l:'警车'},{e:'🚌',l:'大巴车'}]},
+      {q:'一起干什么？',opts:[{e:'🏁',l:'赛车'},{e:'⛽',l:'加油'},{e:'🌉',l:'过大桥'}]}
+    ],
+    emoji:'🏎️'
+  },
+  castle:{
+    chars:[{c:'pink',e:'👸',n:'公主'},{c:'blue',e:'🤴',n:'王子'},{c:'purple',e:'🧚',n:'小精灵'}],
+    sl:[
+      {q:'去哪里？',opts:[{e:'🏰',l:'城堡'},{e:'🌲',l:'魔法森林'},{e:'🌊',l:'海边'}]},
+      {q:'找谁帮忙？',opts:[{e:'🐉',l:'小龙'},{e:'🦄',l:'独角兽'},{e:'🧙',l:'魔法师'}]},
+      {q:'去干什么？',opts:[{e:'💎',l:'找宝石'},{e:'👑',l:'找王冠'},{e:'🌈',l:'找彩虹'}]}
+    ],
+    emoji:'🏰'
+  },
+  ocean:{
+    chars:[{c:'orange',e:'🐠',n:'小橙鱼'},{c:'blue',e:'🐟',n:'小蓝鱼'},{c:'pink',e:'🦑',n:'小粉章鱼'}],
+    sl:[
+      {q:'游去哪里？',opts:[{e:'🪸',l:'珊瑚礁'},{e:'🚢',l:'沉船'},{e:'🐚',l:'贝壳湾'}]},
+      {q:'遇到谁？',opts:[{e:'🐢',l:'海龟'},{e:'🐙',l:'章鱼'},{e:'🐬',l:'海豚'}]},
+      {q:'一起干什么？',opts:[{e:'🐚',l:'找贝壳'},{e:'🐠',l:'捉迷藏'},{e:'🌊',l:'冲浪'}]}
+    ],
+    emoji:'🐠'
+  }
+};
 
 // ===== Navigation =====
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
 // S1
-function chooseTheme(t,e,n){ theme=t;themeEmoji=e;themeName=n; document.getElementById('s2title').textContent=e+' '+n; show('s2'); }
+function chooseTheme(t,e,n){
+  theme=t;themeEmoji=e;themeName=n;
+  document.getElementById('s2title').textContent=e+' '+n;
+  // Render characters for this theme
+  var cfg=THEMES[theme];
+  document.getElementById('charGrid').innerHTML=cfg.chars.map(function(ch){
+    return '<div class="char-card" onclick="chooseChar(\''+ch.c+'\',\''+ch.e+'\',\''+ch.n+'\',this)"><div class="emoji">'+ch.e+'</div><div class="name">'+ch.n+'</div></div>';
+  }).join('');
+  show('s2');
+}
 
 // S2
 function chooseChar(c,e,n,el){
@@ -241,6 +279,9 @@ function chooseChar(c,e,n,el){
   document.querySelectorAll('.char-card').forEach(x=>x.style.borderColor='');
   el.style.borderColor='#f59e0b';
   document.getElementById('nameSection').style.display='block';
+  // reset name state
+  document.getElementById('nameResult').textContent='';
+  document.getElementById('startBtn').style.display='none';
 }
 function chooseName(el,n){ charName=n; document.getElementById('nameResult').textContent=n; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); if(el) el.classList.add('sel'); document.getElementById('startBtn').style.display='inline-flex'; }
 
@@ -287,33 +328,34 @@ function startMic(){
   };
   recog.start();
 }
-function goStoryLine(){ slStep=0;storyLine={place:'',friend:'',activity:''}; show('s3'); renderSL(); }
+function goStoryLine(){ slStep=0;storyLine={place:'',placeE:'',friend:'',friendE:'',activity:'',activityE:''}; show('s3'); renderSL(); }
 
 // S3: Story Line
 function renderSL(){
+  const cfg=THEMES[theme];
   const summaryEl=document.getElementById('slSummary');
   const tags=[];
-  if(storyLine.place) tags.push('🌲 '+storyLine.place);
-  if(storyLine.friend) tags.push('🐰 '+storyLine.friend);
-  if(storyLine.activity) tags.push('🍎 '+storyLine.activity);
+  if(storyLine.place) tags.push(storyLine.placeE+' '+storyLine.place);
+  if(storyLine.friend) tags.push(storyLine.friendE+' '+storyLine.friend);
+  if(storyLine.activity) tags.push(storyLine.activityE+' '+storyLine.activity);
   summaryEl.innerHTML=tags.map(t=>'<div class="sl-tag">'+t+'</div>').join('');
 
   if(slStep>=3){
     document.getElementById('slContent').innerHTML='<div style="text-align:center;margin-top:20px;"><button class="big-btn" onclick="doMagic()">✨ 变魔法！</button></div>';
     return;
   }
-  const q=SL_QUESTIONS[slStep];
+  const q=cfg.sl[slStep];
   let html='<div class="sl-q">'+charName+'，'+q.q+'</div><div class="sl-options">';
   q.opts.forEach(o=>{
-    html+='<div class="sl-opt" onclick="pickSL('+slStep+',\''+o.l+'\')"><div class="emoji">'+o.e+'</div><div class="label">'+o.l+'</div></div>';
+    html+='<div class="sl-opt" onclick="pickSL('+slStep+',\''+o.l+'\',\''+o.e+'\')"><div class="emoji">'+o.e+'</div><div class="label">'+o.l+'</div></div>';
   });
   html+='</div>';
   document.getElementById('slContent').innerHTML=html;
 }
-function pickSL(step,val){
-  if(step===0) storyLine.place=val;
-  else if(step===1) storyLine.friend=val;
-  else if(step===2) storyLine.activity=val;
+function pickSL(step,val,emoji){
+  if(step===0){ storyLine.place=val; storyLine.placeE=emoji; }
+  else if(step===1){ storyLine.friend=val; storyLine.friendE=emoji; }
+  else if(step===2){ storyLine.activity=val; storyLine.activityE=emoji; }
   slStep++;
   renderSL();
 }
@@ -339,11 +381,12 @@ function doMagic(){
 // Generate 4-page story from story line
 function genStory(){
   const n=charName, p=storyLine.place, f=storyLine.friend, a=storyLine.activity;
+  const ce=charEmoji, pe=storyLine.placeE, fe=storyLine.friendE, ae=storyLine.activityE;
   return [
-    {summary:n+'出发去'+p+'啦！', zh:n+'开心地出发去'+p, en:n+' happily set off to the '+p, emoji:'🦕🌲'},
-    {summary:n+'在'+p+'遇到了'+f, zh:n+'在'+p+'遇到了'+f, en:n+' met '+f+' at the '+p, emoji:'🦕🐰'},
-    {summary:'他们一起'+a+'！', zh:'他们一起'+a+'，玩得好开心', en:'They '+a+' together, so much fun', emoji:'🐰🍎'},
-    {summary:'太开心啦，好朋友抱一抱！', zh:'好朋友抱一抱，今天真开心', en:'Best friends hug, what a happy day', emoji:'🦕🐰💕'}
+    {summary:n+'出发去'+p+'啦！', zh:n+'开心地出发去'+p, en:n+' happily set off to '+p, emoji:ce+pe},
+    {summary:n+'在'+p+'遇到了'+f, zh:n+'在'+p+'遇到了'+f, en:n+' met '+f+' at '+p, emoji:ce+fe},
+    {summary:'他们一起'+a+'！', zh:'他们一起'+a+'，玩得好开心', en:'They '+a+' together, so much fun', emoji:fe+ae},
+    {summary:'太开心啦，好朋友抱一抱！', zh:'好朋友抱一抱，今天真开心', en:'Best friends hug, what a happy day', emoji:ce+fe+'💕'}
   ];
 }
 
@@ -374,20 +417,65 @@ function initCanvas(){
   ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.strokeStyle='#333'; ctx.lineWidth=3; ctx.lineJoin='round';
-  // simple scene lineart
-  ctx.beginPath(); ctx.moveTo(0,340); ctx.lineTo(320,340); ctx.stroke();
-  ctx.strokeRect(40,250,30,90);
-  ctx.beginPath(); ctx.arc(55,230,45,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(270,70,35,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(130,80,25,0,Math.PI*2); ctx.arc(160,80,30,0,Math.PI*2); ctx.arc(190,80,25,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(200,290,50,40,0,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(170,260,25,0,Math.PI*2); ctx.stroke();
-  ctx.strokeRect(180,320,15,20); ctx.strokeRect(210,320,15,20);
-  ctx.beginPath(); ctx.arc(165,255,4,0,Math.PI*2); ctx.stroke();
+  // scene lineart — varies by theme
+  if(theme==='car'){ drawCarScene(); }
+  else { drawDinoScene(); }
   undoStack=[];
   document.getElementById('palette').innerHTML=COLORS.map((c,i)=>
     '<div class="color '+(i===0?'sel':'')+'" style="background:'+c+'" onclick="pickColor(\''+c+'\',this)"></div>').join('');
   curColor=COLORS[0];
+}
+
+// Lineart scenes by theme
+function drawDinoScene(){
+  // ground
+  ctx.beginPath(); ctx.moveTo(0,340); ctx.lineTo(320,340); ctx.stroke();
+  // tree trunk + leaves
+  ctx.strokeRect(40,250,30,90);
+  ctx.beginPath(); ctx.arc(55,230,45,0,Math.PI*2); ctx.stroke();
+  // sun
+  ctx.beginPath(); ctx.arc(270,70,35,0,Math.PI*2); ctx.stroke();
+  // clouds
+  ctx.beginPath(); ctx.arc(130,80,25,0,Math.PI*2); ctx.arc(160,80,30,0,Math.PI*2); ctx.arc(190,80,25,0,Math.PI*2); ctx.stroke();
+  // dino body + head + legs + eye
+  ctx.beginPath(); ctx.ellipse(200,290,50,40,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(170,260,25,0,Math.PI*2); ctx.stroke();
+  ctx.strokeRect(180,320,15,20); ctx.strokeRect(210,320,15,20);
+  ctx.beginPath(); ctx.arc(165,255,4,0,Math.PI*2); ctx.stroke();
+}
+
+function drawCarScene(){
+  // road (two horizontal lines)
+  ctx.beginPath(); ctx.moveTo(0,330); ctx.lineTo(320,330); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,370); ctx.lineTo(320,370); ctx.stroke();
+  // road dashes
+  ctx.lineWidth=2;
+  for(var x=20;x<320;x+=50){ ctx.beginPath(); ctx.moveTo(x,350); ctx.lineTo(x+25,350); ctx.stroke(); }
+  ctx.lineWidth=3;
+  // sun
+  ctx.beginPath(); ctx.arc(270,70,35,0,Math.PI*2); ctx.stroke();
+  // clouds
+  ctx.beginPath(); ctx.arc(110,80,22,0,Math.PI*2); ctx.arc(140,80,28,0,Math.PI*2); ctx.arc(168,80,22,0,Math.PI*2); ctx.stroke();
+  // car body (rounded rectangle-ish)
+  ctx.beginPath();
+  ctx.moveTo(110,290); ctx.lineTo(120,265); ctx.lineTo(195,265); ctx.lineTo(210,290); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(110,290); ctx.lineTo(210,290); ctx.stroke();
+  // roof/cabin
+  ctx.beginPath(); ctx.moveTo(135,265); ctx.lineTo(150,245); ctx.lineTo(180,245); ctx.lineTo(190,265); ctx.stroke();
+  // windows
+  ctx.beginPath(); ctx.moveTo(140,262); ctx.lineTo(152,248); ctx.lineTo(168,248); ctx.lineTo(168,262); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(172,262); ctx.lineTo(172,248); ctx.lineTo(178,248); ctx.lineTo(186,262); ctx.stroke();
+  // wheels
+  ctx.beginPath(); ctx.arc(140,295,18,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(185,295,18,0,Math.PI*2); ctx.stroke();
+  // wheel hubs
+  ctx.beginPath(); ctx.arc(140,295,7,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(185,295,7,0,Math.PI*2); ctx.stroke();
+  // headlight
+  ctx.beginPath(); ctx.arc(208,278,5,0,Math.PI*2); ctx.stroke();
+  // a traffic cone on the side
+  ctx.beginPath(); ctx.moveTo(50,330); ctx.lineTo(40,360); ctx.lineTo(60,360); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(45,345); ctx.lineTo(55,345); ctx.stroke();
 }
 let curColor='#ef4444';
 function pickColor(c,el){ curColor=c; document.querySelectorAll('.color').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); }
