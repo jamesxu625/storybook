@@ -124,11 +124,17 @@
       <div class="char-card" onclick="chooseChar('blue','🦎','蓝色恐龙',this)"><div class="emoji">🦎</div><div class="name">蓝色恐龙</div></div>
     </div>
     <div id="nameSection" style="display:none;margin-top:24px;text-align:center;">
-      <p style="font-size:16px;margin-bottom:8px;">叫什么名字？</p>
-      <div class="name-chips">
-        <div class="chip" onclick="chooseName(this,'豆豆')">豆豆</div>
-        <div class="chip" onclick="chooseName(this,'奇奇')">奇奇</div>
-        <div class="chip" onclick="chooseName(this,'乐乐')">乐乐</div>
+      <p style="font-size:16px;margin-bottom:14px;">给它取个名字吧！</p>
+      <div id="nameResult" style="font-size:28px;font-weight:700;color:#f59e0b;min-height:40px;margin-bottom:14px;"></div>
+      <button class="big-btn" id="micBtn" onclick="startMic()" style="background:#ef4444;box-shadow:0 6px 20px rgba(239,68,68,0.4);">🎤 说名字</button>
+      <p id="micHint" style="font-size:13px;opacity:0.5;margin-top:8px;">点按钮，说出你想叫它的名字</p>
+      <div style="margin-top:16px;">
+        <p style="font-size:13px;opacity:0.5;margin-bottom:8px;">或者选一个：</p>
+        <div class="name-chips">
+          <div class="chip" onclick="chooseName(this,'豆豆')">豆豆</div>
+          <div class="chip" onclick="chooseName(this,'奇奇')">奇奇</div>
+          <div class="chip" onclick="chooseName(this,'乐乐')">乐乐</div>
+        </div>
       </div>
     </div>
     <button class="big-btn" id="startBtn" style="margin-top:30px;display:none;" onclick="goStoryLine()">开始搭故事！</button>
@@ -244,7 +250,45 @@ function chooseChar(c,e,n,el){
   el.style.borderColor='#f59e0b';
   document.getElementById('nameSection').style.display='block';
 }
-function chooseName(el,n){ charName=n; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); document.getElementById('startBtn').style.display='inline-flex'; }
+function chooseName(el,n){ charName=n; document.getElementById('nameResult').textContent=n; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); if(el) el.classList.add('sel'); document.getElementById('startBtn').style.display='inline-flex'; }
+
+// Voice name input (Web Speech API)
+var recog=null, recogActive=false;
+function startMic(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('micHint').textContent='你的浏览器不支持语音，请选一个名字吧';
+    return;
+  }
+  if(recogActive){ recog.stop(); return; }
+  recog=new SR();
+  recog.lang='zh-CN';
+  recog.interimResults=true;
+  recog.onstart=function(){
+    recogActive=true;
+    document.getElementById('micBtn').textContent='🔴 听ing...';
+    document.getElementById('micBtn').style.background='#7f1d1d';
+    document.getElementById('micHint').textContent='我在听...说出名字吧！';
+  };
+  recog.onresult=function(e){
+    var text='';
+    for(var i=e.resultIndex;i<e.results.length;i++) text+=e.results[i][0].transcript;
+    text=text.trim().slice(0,6); // max 6 chars
+    document.getElementById('nameResult').textContent=text;
+    if(e.results[e.results.length-1].isFinal){
+      charName=text;
+      document.getElementById('startBtn').style.display='inline-flex';
+      document.getElementById('micHint').textContent='就叫 '+text+' 啦！点"开始搭故事"';
+    }
+  };
+  recog.onerror=function(){ document.getElementById('micHint').textContent='没听清，再试一次或选一个吧'; };
+  recog.onend=function(){
+    recogActive=false;
+    document.getElementById('micBtn').textContent='🎤 说名字';
+    document.getElementById('micBtn').style.background='#ef4444';
+  };
+  recog.start();
+}
 function goStoryLine(){ slStep=0;storyLine={place:'',friend:'',activity:''}; show('s3'); renderSL(); }
 
 // S3: Story Line
